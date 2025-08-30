@@ -111,11 +111,13 @@ const PolityBook = () => {
                 <BookOpen className="w-5 h-5 text-blue-600" />
                 {topic.heading}
               </h2>
+              {topic?.image &&
               <img
                 src={topic.image}
                 alt={topic.heading}
                 className="my-3 rounded-lg shadow"
               />
+              }
               <p className="bg-yellow-100 p-2 rounded-lg font-medium">
                 ⭐ Important: {topic.highlight}
               </p>
