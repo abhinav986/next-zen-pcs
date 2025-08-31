@@ -16,7 +16,7 @@ const PolityBook = () => {
   );
   const [notes, setNotes] = useState([]);
   const [completedChapters, setCompletedChapters] = useState(new Set());
-  const [showBookmarks, setShowBookmarks] = useState(false);
+  const [showBookmarks, setShowBookmarks] = useState(true);
 
   const addNote = (point) => {
     if (!notes.includes(point)) {
@@ -97,7 +97,7 @@ const PolityBook = () => {
       {/* Floating Bookmarks Button */}
       <Button
         onClick={() => setShowBookmarks(!showBookmarks)}
-        className="fixed top-20 right-6 z-50 rounded-full h-12 w-12 shadow-lg"
+        className="fixed top-5 right-6 z-50 rounded-full h-12 w-12 shadow-lg"
         size="icon"
         variant={showBookmarks ? "default" : "outline"}
       >
@@ -106,7 +106,7 @@ const PolityBook = () => {
 
       {/* Bookmarks Panel */}
       {showBookmarks && (
-        <div className="fixed top-36 right-6 w-80 max-h-96 bg-card border border-border rounded-lg shadow-xl z-40 overflow-hidden">
+        <div className="fixed top-15 right-6 w-80 max-h-96 bg-card border border-border rounded-lg shadow-xl z-40 overflow-hidden">
           <div className="p-4 border-b border-border bg-primary/5">
             <h3 className="font-semibold text-foreground flex items-center gap-2">
               <Star className="h-4 w-4 text-yellow-500" />
@@ -282,7 +282,7 @@ const PolityBook = () => {
                   </div>
                 </div>
                 
-                <details className="mt-6 cursor-pointer bg-accent/20 rounded-lg">
+                <details className="mt-6 cursor-pointer bg-accent/20 rounded-lg" open>
                   <summary className="font-semibold text-foreground hover:text-primary transition-colors p-4 flex items-center gap-2">
                     <BookOpen className="w-4 h-4" />
                     Detailed Notes ({topic.details.length} points)
@@ -316,7 +316,7 @@ const PolityBook = () => {
                     </h4>
                     <div className="space-y-2">
                       {topic.prelimsTips.map((tip, i) => (
-                        <div key={i} className="flex items-start gap-2">
+                        <div key={i} onClick={() => addNote(tip)} className="flex items-start gap-2">
                           <div className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
                           <span className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">{tip}</span>
                         </div>
