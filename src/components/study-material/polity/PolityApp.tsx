@@ -55,7 +55,7 @@ const PolityApp = () => {
             <PolityBook />
           </div>
           <div className="w-96 border-l border-border">
-            {/* <ChatPanel /> */}
+            <ChatPanel />
           </div>
         </div>
       </div>

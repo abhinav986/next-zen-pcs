@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Send } from "lucide-react";
-import OpenAI from "openai";
+// Free AI using Hugging Face API
 import { Button } from "@/components/ui/button";
 
 const ChatPanel = () => {
@@ -10,11 +10,66 @@ const ChatPanel = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔑 Load your OpenAI API key from env
-  const client = new OpenAI({
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-    dangerouslyAllowBrowser: true // ⚠️ For demo only, better proxy via backend
-  });
+  // Using free Hugging Face API for AI assistance
+  const callFreeAI = async (message: string) => {
+    try {
+      const response = await fetch("https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          inputs: `Question about Indian Polity: ${message}`,
+          parameters: {
+            max_length: 200,
+            temperature: 0.7,
+          }
+        })
+      });
+      
+      if (!response.ok) {
+        // Fallback to a simple knowledge-based response
+        return getPolityResponse(message);
+      }
+      
+      const data = await response.json();
+      return data.generated_text || getPolityResponse(message);
+    } catch (error) {
+      return getPolityResponse(message);
+    }
+  };
+
+  // Simple knowledge-based responses for Indian Polity
+  const getPolityResponse = (question: string) => {
+    const lowerQ = question.toLowerCase();
+    
+    if (lowerQ.includes('constitution')) {
+      return "The Indian Constitution came into effect on 26th January 1950. It has 395 articles in 22 parts and 12 schedules. Key features include federal structure, parliamentary system, and fundamental rights.";
+    }
+    if (lowerQ.includes('fundamental rights')) {
+      return "There are 6 Fundamental Rights: Right to Equality, Right to Freedom, Right against Exploitation, Right to Freedom of Religion, Cultural and Educational Rights, and Right to Constitutional Remedies.";
+    }
+    if (lowerQ.includes('directive principles')) {
+      return "Directive Principles of State Policy are guidelines for governance. They are non-justiciable but fundamental in governance, covering social, economic and political justice.";
+    }
+    if (lowerQ.includes('parliament')) {
+      return "Indian Parliament consists of President, Lok Sabha (House of People) and Rajya Sabha (Council of States). Maximum strength: Lok Sabha 552, Rajya Sabha 250.";
+    }
+    if (lowerQ.includes('president')) {
+      return "The President is the Head of State, elected by Electoral College. Term: 5 years. Key powers include executive, legislative, judicial, and emergency powers.";
+    }
+    if (lowerQ.includes('prime minister')) {
+      return "Prime Minister is the Head of Government, leader of the party/coalition with majority in Lok Sabha. Appointed by President, heads the Council of Ministers.";
+    }
+    if (lowerQ.includes('supreme court')) {
+      return "Supreme Court is the apex court with original, appellate and advisory jurisdiction. Guardian of Constitution with power of judicial review.";
+    }
+    if (lowerQ.includes('federalism')) {
+      return "India follows quasi-federal structure with unitary bias. Division of powers through Union, State and Concurrent lists in 7th Schedule.";
+    }
+    
+    return "I can help with Indian Polity topics like Constitution, Fundamental Rights, Parliament, President, Prime Minister, Supreme Court, Federalism, etc. Please ask a specific question!";
+  };
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -24,17 +79,12 @@ const ChatPanel = () => {
     setLoading(true);
 
     try {
-      const res = await client.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: newMessages as any
-      });
-
-      const reply = res.choices[0].message.content || "No response";
+      const reply = await callFreeAI(input);
       setMessages([...newMessages, { role: "assistant" as const, content: reply }]);
     } catch (err) {
       setMessages([
         ...newMessages,
-        { role: "assistant" as const, content: "⚠️ Error: Unable to fetch response." }
+        { role: "assistant" as const, content: "⚠️ Error: Unable to fetch response. Please try again." }
       ]);
     } finally {
       setLoading(false);

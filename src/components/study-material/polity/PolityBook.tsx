@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Star, Lightbulb, Download } from "lucide-react";
+import { BookOpen, Star, Lightbulb, Download, Bookmark, Play, CheckCircle } from "lucide-react";
 import jsPDF from "jspdf";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
@@ -15,11 +15,21 @@ const PolityBook = () => {
     "Chapter 1: Making of the Constitution"
   );
   const [notes, setNotes] = useState([]);
+  const [completedChapters, setCompletedChapters] = useState(new Set());
+  const [showBookmarks, setShowBookmarks] = useState(false);
 
   const addNote = (point) => {
     if (!notes.includes(point)) {
       setNotes([...notes, point]);
     }
+  };
+
+  const markChapterComplete = (chapter) => {
+    setCompletedChapters(prev => new Set([...prev, chapter]));
+  };
+
+  const removeNote = (index) => {
+    setNotes(notes.filter((_, i) => i !== index));
   };
 
   // ✅ Export Notes to PDF
@@ -83,121 +93,242 @@ const PolityBook = () => {
   };
 
   return (
-    <div className="flex h-full">
-      {/* Sidebar */}
-      <div className="w-72 bg-card border-r border-border overflow-y-auto">
-        <h2 className="p-4 font-bold text-lg border-b border-border text-foreground">📘 Chapters</h2>
-        <ul>
-          {Object.keys(chapters).map((chapter) => (
-            <li
-              key={chapter}
-              onClick={() => setSelectedChapter(chapter)}
-              className={`p-3 cursor-pointer hover:bg-accent/50 transition-colors ${
-                selectedChapter === chapter ? "bg-primary/10 font-semibold border-r-2 border-primary" : ""
-              } text-foreground`}
-            >
-              {chapter}
-            </li>
-          ))}
-        </ul>
+    <div className="flex h-full relative">
+      {/* Floating Bookmarks Button */}
+      <Button
+        onClick={() => setShowBookmarks(!showBookmarks)}
+        className="fixed top-20 right-6 z-50 rounded-full h-12 w-12 shadow-lg"
+        size="icon"
+        variant={showBookmarks ? "default" : "outline"}
+      >
+        <Bookmark className="h-5 w-5" />
+      </Button>
+
+      {/* Bookmarks Panel */}
+      {showBookmarks && (
+        <div className="fixed top-36 right-6 w-80 max-h-96 bg-card border border-border rounded-lg shadow-xl z-40 overflow-hidden">
+          <div className="p-4 border-b border-border bg-primary/5">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
+              <Star className="h-4 w-4 text-yellow-500" />
+              My Bookmarks ({notes.length})
+            </h3>
+          </div>
+          <div className="overflow-y-auto max-h-60 p-2">
+            {notes.length === 0 ? (
+              <p className="text-muted-foreground text-sm p-4 text-center">
+                No bookmarks yet. Click on points to save them.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {notes.map((note, i) => (
+                  <div key={i} className="flex items-start gap-2 p-2 bg-accent/20 rounded text-sm">
+                    <span className="flex-1 text-foreground">{note}</span>
+                    <Button
+                      onClick={() => removeNote(i)}
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {notes.length > 0 && (
+            <div className="p-3 border-t border-border bg-muted/20">
+              <div className="flex gap-2">
+                <Button onClick={exportNotesToPDF} size="sm" className="flex-1">
+                  <Download className="h-3 w-3 mr-1" /> PDF
+                </Button>
+                <Button onClick={exportNotesToDOCX} size="sm" variant="outline" className="flex-1">
+                  <Download className="h-3 w-3 mr-1" /> DOCX
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Chapter Playlist Sidebar */}
+      <div className="w-80 bg-gradient-to-b from-card to-muted/20 border-r border-border overflow-y-auto">
+        <div className="p-4 border-b border-border bg-primary/5">
+          <h2 className="font-bold text-lg text-foreground flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-primary" />
+            Indian Polity Playlist
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {Object.keys(chapters).length} chapters • {completedChapters.size} completed
+          </p>
+        </div>
+        
+        <div className="p-2">
+          {Object.keys(chapters).map((chapter, index) => {
+            const isSelected = selectedChapter === chapter;
+            const isCompleted = completedChapters.has(chapter);
+            
+            return (
+              <div
+                key={chapter}
+                onClick={() => setSelectedChapter(chapter)}
+                className={`group p-3 mb-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                  isSelected 
+                    ? "bg-primary/10 border border-primary/20 shadow-sm" 
+                    : "hover:bg-accent/30 border border-transparent"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    isCompleted 
+                      ? "bg-green-500 text-white" 
+                      : isSelected 
+                        ? "bg-primary text-primary-foreground" 
+                        : "bg-muted text-muted-foreground group-hover:bg-accent"
+                  }`}>
+                    {isCompleted ? <CheckCircle className="h-4 w-4" /> : index + 1}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h3 className={`font-medium text-sm leading-tight ${
+                      isSelected ? "text-primary" : "text-foreground"
+                    }`}>
+                      {chapter.replace("Chapter ", "").replace(/^\d+:\s*/, "")}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {chapters[chapter].length} topics
+                    </p>
+                  </div>
+                  
+                  {isSelected && (
+                    <Play className="h-4 w-4 text-primary animate-pulse" />
+                  )}
+                </div>
+                
+                {isSelected && (
+                  <div className="mt-2 pt-2 border-t border-border/50">
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markChapterComplete(chapter);
+                      }}
+                      size="sm"
+                      variant="outline"
+                      className="w-full text-xs"
+                      disabled={isCompleted}
+                    >
+                      {isCompleted ? "✓ Completed" : "Mark Complete"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        
+        <div className="p-4 border-t border-border bg-muted/10">
+          <div className="text-center">
+            <div className="text-sm font-medium text-foreground">Progress</div>
+            <div className="w-full bg-muted rounded-full h-2 mt-2">
+              <div 
+                className="bg-primary h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(completedChapters.size / Object.keys(chapters).length) * 100}%` }}
+              ></div>
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {Math.round((completedChapters.size / Object.keys(chapters).length) * 100)}% complete
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6 bg-background">
-        <h1 className="text-2xl font-bold mb-6 text-foreground">{selectedChapter}</h1>
-        {chapters[selectedChapter].map((topic, idx) => (
-          <Card key={idx} className="mb-6 shadow-sm border-border hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-bold flex items-center gap-2 text-foreground mb-4">
-                <BookOpen className="w-5 h-5 text-primary" />
-                {topic.heading}
-              </h2>
-              {topic?.image &&
-              <img
-                src={topic.image}
-                alt={topic.heading}
-                className="my-3 rounded-lg shadow"
-              />
-              }
-              <div className="bg-amber-50 dark:bg-amber-950/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800 mb-4">
-                <p className="font-medium text-amber-800 dark:text-amber-200">
-                  ⭐ Important: {topic.highlight}
-                </p>
-              </div>
-              <details className="mt-4 cursor-pointer">
-                <summary className="font-semibold text-foreground hover:text-primary transition-colors">📚 Know More</summary>
-                <ul className="list-disc ml-5 mt-3 space-y-2">
-                  {topic.details.map((point, i) => (
-                    <li
-                      key={i}
-                      onClick={() => addNote(point)}
-                      className="cursor-pointer hover:text-primary transition-colors text-muted-foreground hover:bg-accent/20 p-2 rounded"
-                    >
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-              </details>
-
-              {/* Prelims Tip Box */}
-              {topic.prelimsTips && (
-                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 rounded-r-lg">
-                  <h4 className="font-semibold flex items-center gap-2 text-blue-800 dark:text-blue-200">
-                    <Lightbulb className="w-4 h-4 text-yellow-500" />
-                    Prelims Pointers
-                  </h4>
-                  <ul className="list-disc ml-5 mt-2 text-sm space-y-1 text-blue-700 dark:text-blue-300">
-                    {topic.prelimsTips.map((tip, i) => (
-                      <li key={i}>{tip}</li>
-                    ))}
-                  </ul>
+        <div className="max-w-4xl">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-foreground mb-2">{selectedChapter}</h1>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <span>{chapters[selectedChapter].length} topics</span>
+              <span>•</span>
+              <span>Estimated reading: {Math.ceil(chapters[selectedChapter].length * 3)} minutes</span>
+            </div>
+          </div>
+          {chapters[selectedChapter].map((topic, idx) => (
+            <Card key={idx} className="mb-8 shadow-sm border-border hover:shadow-lg transition-all duration-200 group">
+              <CardContent className="p-6">
+                <h2 className="text-xl font-bold flex items-center gap-3 text-foreground mb-4 group-hover:text-primary transition-colors">
+                  <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 text-primary" />
+                  </div>
+                  {topic.heading}
+                </h2>
+                {topic?.image && (
+                  <div className="my-4">
+                    <img
+                      src={topic.image}
+                      alt={topic.heading}
+                      className="rounded-xl shadow-md w-full max-w-md mx-auto"
+                    />
+                  </div>
+                )}
+                
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 p-4 rounded-xl border border-amber-200 dark:border-amber-800 mb-6">
+                  <div className="flex items-start gap-3">
+                    <Star className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-semibold text-amber-800 dark:text-amber-200 mb-1">Key Point</h4>
+                      <p className="text-amber-700 dark:text-amber-300">{topic.highlight}</p>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+                
+                <details className="mt-6 cursor-pointer bg-accent/20 rounded-lg">
+                  <summary className="font-semibold text-foreground hover:text-primary transition-colors p-4 flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    Detailed Notes ({topic.details.length} points)
+                  </summary>
+                  <div className="px-4 pb-4">
+                    <div className="grid gap-3 mt-3">
+                      {topic.details.map((point, i) => (
+                        <div
+                          key={i}
+                          onClick={() => addNote(point)}
+                          className="group cursor-pointer hover:bg-primary/5 p-3 rounded-lg border border-transparent hover:border-primary/20 transition-all"
+                        >
+                          <div className="flex items-start gap-3">
+                            <Bookmark className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 mt-0.5" />
+                            <span className="text-foreground group-hover:text-primary transition-colors leading-relaxed">
+                              {point}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </details>
 
-        {/* Global Memory Notes */}
-        <Card className="border-2 border-dashed border-primary/50 bg-gradient-to-br from-card to-accent/5">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-bold flex items-center gap-2 text-foreground mb-4">
-              <Star className="text-yellow-500" /> My Memory Notes
-            </h3>
-            {notes.length === 0 ? (
-              <p className="text-muted-foreground">
-                Click on any point above to save it here.
-              </p>
-            ) : (
-              <div>
-                <ul className="list-disc ml-5 space-y-2">
-                  {notes.map((n, i) => (
-                    <li key={i} className="text-foreground">{n}</li>
-                  ))}
-                </ul>
+                {/* Prelims Tip Box */}
+                {topic.prelimsTips && (
+                  <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 border-l-4 border-blue-500 rounded-r-xl">
+                    <h4 className="font-semibold flex items-center gap-2 text-blue-800 dark:text-blue-200 mb-3">
+                      <Lightbulb className="w-5 h-5 text-yellow-500" />
+                      Prelims Strategy Tips
+                    </h4>
+                    <div className="space-y-2">
+                      {topic.prelimsTips.map((tip, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
+                          <span className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">{tip}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-                {/* Export Buttons */}
-                <div className="flex gap-3 mt-6">
-                  <Button
-                    onClick={exportNotesToPDF}
-                    variant="default"
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <Download className="w-4 h-4" /> PDF
-                  </Button>
-                  <Button
-                    onClick={exportNotesToDOCX}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <Download className="w-4 h-4" /> DOCX
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
