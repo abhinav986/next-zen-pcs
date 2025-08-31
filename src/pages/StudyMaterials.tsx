@@ -6,9 +6,20 @@ import { Input } from "@/components/ui/input";
 import { upscSubjects } from "@/data/upscSubjects";
 import { Search, BookOpen, Download, Eye } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const StudyMaterials = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
+
+  const handleViewNotes = (subjectId: string) => {
+    if (subjectId === 'polity') {
+      navigate('/study-materials/polity');
+    } else {
+      // For other subjects, show coming soon or implement similar
+      alert(`${subjectId} notes coming soon!`);
+    }
+  };
 
   const filteredSubjects = upscSubjects.filter(subject =>
     subject.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -82,7 +93,12 @@ const StudyMaterials = () => {
                       </span>
                     </div>
                     <div className="space-y-2">
-                      <Button variant="default" className="w-full" size="sm">
+                      <Button 
+                        variant="default" 
+                        className="w-full" 
+                        size="sm"
+                        onClick={() => handleViewNotes(subject.id)}
+                      >
                         <BookOpen className="h-4 w-4 mr-2" />
                         View Notes
                       </Button>

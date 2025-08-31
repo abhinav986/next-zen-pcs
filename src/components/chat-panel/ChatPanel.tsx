@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Send } from "lucide-react";
 import OpenAI from "openai";
+import { Button } from "@/components/ui/button";
 
 const ChatPanel = () => {
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<Array<{role: "user" | "assistant", content: string}>>([
     { role: "assistant", content: "Hi! 👋 Ask me anything about Indian Polity." }
   ]);
   const [input, setInput] = useState("");
@@ -17,7 +18,7 @@ const ChatPanel = () => {
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-    const newMessages = [...messages, { role: "user", content: input }];
+    const newMessages: Array<{role: "user" | "assistant", content: string}> = [...messages, { role: "user" as const, content: input }];
     setMessages(newMessages);
     setInput("");
     setLoading(true);
@@ -25,15 +26,15 @@ const ChatPanel = () => {
     try {
       const res = await client.chat.completions.create({
         model: "gpt-4o-mini",
-        messages: newMessages
+        messages: newMessages as any
       });
 
-      const reply = res.choices[0].message.content;
-      setMessages([...newMessages, { role: "assistant", content: reply }]);
+      const reply = res.choices[0].message.content || "No response";
+      setMessages([...newMessages, { role: "assistant" as const, content: reply }]);
     } catch (err) {
       setMessages([
         ...newMessages,
-        { role: "assistant", content: "⚠️ Error: Unable to fetch response." }
+        { role: "assistant" as const, content: "⚠️ Error: Unable to fetch response." }
       ]);
     } finally {
       setLoading(false);
@@ -41,37 +42,43 @@ const ChatPanel = () => {
   };
 
   return (
-    <div className="flex flex-col h-full border-l bg-gray-50">
+    <div className="flex flex-col h-full bg-card">
+      <div className="p-4 border-b border-border">
+        <h3 className="font-semibold text-foreground">AI Study Assistant</h3>
+        <p className="text-sm text-muted-foreground">Ask questions about Indian Polity</p>
+      </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((m, i) => (
           <div
             key={i}
-            className={`p-2 rounded-lg ${
+            className={`p-3 rounded-lg ${
               m.role === "assistant"
-                ? "bg-blue-100 text-gray-800"
-                : "bg-green-100 text-gray-900 text-right"
+                ? "bg-accent/50 text-foreground"
+                : "bg-primary/10 text-foreground text-right ml-8"
             }`}
           >
             {m.content}
           </div>
         ))}
         {loading && (
-          <div className="text-gray-500 text-sm italic">Thinking...</div>
+          <div className="text-muted-foreground text-sm italic">Thinking...</div>
         )}
       </div>
-      <div className="p-3 border-t flex gap-2">
+      <div className="p-4 border-t border-border flex gap-2">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask your Polity doubt..."
-          className="flex-1 border rounded-lg p-2"
+          className="flex-1 border border-border rounded-lg p-2 bg-background text-foreground"
+          onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
         />
-        <button
+        <Button
           onClick={sendMessage}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center gap-1"
+          size="sm"
+          className="flex items-center gap-1"
         >
-          <Send className="w-4 h-4" /> Ask
-        </button>
+          <Send className="w-4 h-4" />
+        </Button>
       </div>
     </div>
   );
