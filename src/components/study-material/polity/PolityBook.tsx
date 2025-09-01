@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Star, Lightbulb, Download, Bookmark, Play, CheckCircle, Menu, X } from "lucide-react";
+import { BookOpen, Star, Lightbulb, Download, Bookmark, Play, CheckCircle, Menu, X, Languages } from "lucide-react";
 import jsPDF from "jspdf";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
@@ -20,6 +20,7 @@ const PolityBook = () => {
   const [completedChapters, setCompletedChapters] = useState(new Set());
   const [showBookmarks, setShowBookmarks] = useState(!isMobile);
   const [showSidebar, setShowSidebar] = useState(!isMobile);
+  const [isHindi, setIsHindi] = useState(false);
 
   const addNote = (point) => {
     if (!notes.includes(point)) {
@@ -95,6 +96,17 @@ const PolityBook = () => {
     saveAs(blob, "UPSC-Polity-Notes.docx");
   };
 
+  // Helper function to get Hindi chapter titles
+  const getChapterTitleHindi = (chapter: string) => {
+    const hindiTitles = {
+      "Chapter 1: Making of the Constitution": "अध्याय 1: संविधान का निर्माण",
+      "Chapter 2: Preamble & Salient Features": "अध्याय 2: प्रस्तावना और मुख्य विशेषताएं",
+      "Chapter 3: Fundamental Rights": "अध्याय 3: मौलिक अधिकार",
+      "Chapter 4: DPSPs & Fundamental Duties": "अध्याय 4: राज्य नीति निदेशक सिद्धांत और मौलिक कर्तव्य"
+    };
+    return hindiTitles[chapter] || chapter;
+  };
+
   return (
     <div className="flex h-full relative">
       {/* Mobile Menu Button */}
@@ -109,12 +121,26 @@ const PolityBook = () => {
         </Button>
       )}
 
+      {/* Language Toggle Button */}
+      <Button
+        onClick={() => setIsHindi(!isHindi)}
+        className={`fixed z-50 rounded-full shadow-lg ${
+          isMobile 
+            ? "top-5 right-24 w-10 h-10" 
+            : "top-5 right-20 h-12 w-12"
+        }`}
+        size="icon"
+        variant="outline"
+      >
+        <Languages className={`${isMobile ? "h-4 w-4" : "h-5 w-5"}`} />
+      </Button>
+
       {/* Floating Bookmarks Button */}
       <Button
         onClick={() => setShowBookmarks(!showBookmarks)}
         className={`fixed z-50 rounded-full h-12 w-12 shadow-lg ${
           isMobile 
-            ? "top-5 right-16 w-10 h-10" 
+            ? "top-5 right-4 w-10 h-10" 
             : "top-5 right-6"
         }`}
         size="icon"
@@ -133,13 +159,13 @@ const PolityBook = () => {
           <div className="p-4 border-b border-border bg-primary/5">
             <h3 className="font-semibold text-foreground flex items-center gap-2">
               <Star className="h-4 w-4 text-yellow-500" />
-              My Bookmarks ({notes.length})
+              {isHindi ? `मेरे बुकमार्क (${notes.length})` : `My Bookmarks (${notes.length})`}
             </h3>
           </div>
           <div className="overflow-y-auto max-h-60 p-2">
             {notes.length === 0 ? (
               <p className="text-muted-foreground text-sm p-4 text-center">
-                No bookmarks yet. Click on points to save them.
+                {isHindi ? "अभी तक कोई बुकमार्क नहीं। पॉइंट्स को सेव करने के लिए उन पर क्लिक करें।" : "No bookmarks yet. Click on points to save them."}
               </p>
             ) : (
               <div className="space-y-2">
@@ -185,10 +211,10 @@ const PolityBook = () => {
         <div className="p-4 border-b border-border bg-primary/5">
           <h2 className="font-bold text-lg text-foreground flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" />
-            Indian Polity Playlist
+            {isHindi ? "भारतीय राजव्यवस्था प्लेलिस्ट" : "Indian Polity Playlist"}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {Object.keys(chapters).length} chapters • {completedChapters.size} completed
+            {Object.keys(chapters).length} {isHindi ? "अध्याय" : "chapters"} • {completedChapters.size} {isHindi ? "पूर्ण" : "completed"}
           </p>
         </div>
         
@@ -222,10 +248,10 @@ const PolityBook = () => {
                     <h3 className={`font-medium text-sm leading-tight ${
                       isSelected ? "text-primary" : "text-foreground"
                     }`}>
-                      {chapter.replace("Chapter ", "").replace(/^\d+:\s*/, "")}
+                      {isHindi ? getChapterTitleHindi(chapter).replace(/अध्याय \d+:\s*/, "") : chapter.replace("Chapter ", "").replace(/^\d+:\s*/, "")}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {chapters[chapter].length} topics
+                      {chapters[chapter].length} {isHindi ? "विषय" : "topics"}
                     </p>
                   </div>
                   
@@ -246,7 +272,7 @@ const PolityBook = () => {
                       className="w-full text-xs"
                       disabled={isCompleted}
                     >
-                      {isCompleted ? "✓ Completed" : "Mark Complete"}
+                      {isCompleted ? (isHindi ? "✓ पूर्ण" : "✓ Completed") : (isHindi ? "पूर्ण चिह्नित करें" : "Mark Complete")}
                     </Button>
                   </div>
                 )}
@@ -257,7 +283,7 @@ const PolityBook = () => {
         
         <div className="p-4 border-t border-border bg-muted/10">
           <div className="text-center">
-            <div className="text-sm font-medium text-foreground">Progress</div>
+            <div className="text-sm font-medium text-foreground">{isHindi ? "प्रगति" : "Progress"}</div>
             <div className="w-full bg-muted rounded-full h-2 mt-2">
               <div 
                 className="bg-primary h-2 rounded-full transition-all duration-300"
@@ -265,7 +291,7 @@ const PolityBook = () => {
               ></div>
             </div>
             <div className="text-xs text-muted-foreground mt-1">
-              {Math.round((completedChapters.size / Object.keys(chapters).length) * 100)}% complete
+              {Math.round((completedChapters.size / Object.keys(chapters).length) * 100)}% {isHindi ? "पूर्ण" : "complete"}
             </div>
           </div>
         </div>
@@ -277,11 +303,13 @@ const PolityBook = () => {
       }`}>
         <div className="max-w-4xl">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-foreground mb-2">{selectedChapter}</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              {isHindi ? getChapterTitleHindi(selectedChapter) : selectedChapter}
+            </h1>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{chapters[selectedChapter].length} topics</span>
+              <span>{chapters[selectedChapter].length} {isHindi ? "विषय" : "topics"}</span>
               <span>•</span>
-              <span>Estimated reading: {Math.ceil(chapters[selectedChapter].length * 3)} minutes</span>
+              <span>{isHindi ? "अनुमानित पठन:" : "Estimated reading:"} {Math.ceil(chapters[selectedChapter].length * 3)} {isHindi ? "मिनट" : "minutes"}</span>
             </div>
           </div>
           {chapters[selectedChapter].map((topic, idx) => (
@@ -291,7 +319,7 @@ const PolityBook = () => {
                   <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
                     <BookOpen className="w-4 h-4 text-primary" />
                   </div>
-                  {topic.heading}
+                  {isHindi ? (topic.headingHindi || topic.heading) : topic.heading}
                 </h2>
                 {topic?.image && (
                   <div className="my-4">
@@ -307,8 +335,12 @@ const PolityBook = () => {
                   <div className="flex items-start gap-3">
                     <Star className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="font-semibold text-amber-800 dark:text-amber-200 mb-1">Key Point</h4>
-                      <p className="text-amber-700 dark:text-amber-300">{topic.highlight}</p>
+                      <h4 className="font-semibold text-amber-800 dark:text-amber-200 mb-1">
+                        {isHindi ? "मुख्य बिंदु" : "Key Point"}
+                      </h4>
+                      <p className="text-amber-700 dark:text-amber-300">
+                        {isHindi ? (topic.highlightHindi || topic.highlight) : topic.highlight}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -316,11 +348,11 @@ const PolityBook = () => {
                 <details className="mt-6 cursor-pointer bg-accent/20 rounded-lg" open>
                   <summary className="font-semibold text-foreground hover:text-primary transition-colors p-4 flex items-center gap-2">
                     <BookOpen className="w-4 h-4" />
-                    Detailed Notes ({topic.details.length} points)
+                    {isHindi ? `विस्तृत नोट्स (${topic.details.length} बिंदु)` : `Detailed Notes (${topic.details.length} points)`}
                   </summary>
                   <div className="px-4 pb-4">
                     <div className="grid gap-3 mt-3">
-                      {topic.details.map((point, i) => (
+                      {(isHindi ? (topic.detailsHindi || topic.details) : topic.details).map((point, i) => (
                         <div
                           key={i}
                           onClick={() => addNote(point)}
@@ -343,10 +375,10 @@ const PolityBook = () => {
                   <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 border-l-4 border-blue-500 rounded-r-xl">
                     <h4 className="font-semibold flex items-center gap-2 text-blue-800 dark:text-blue-200 mb-3">
                       <Lightbulb className="w-5 h-5 text-yellow-500" />
-                      Prelims Strategy Tips
+                      {isHindi ? "प्रीलिम्स रणनीति सुझाव" : "Prelims Strategy Tips"}
                     </h4>
                     <div className="space-y-2">
-                      {topic.prelimsTips.map((tip, i) => (
+                      {(isHindi ? (topic.prelimsTipsHindi || topic.prelimsTips) : topic.prelimsTips).map((tip, i) => (
                         <div key={i} onClick={() => addNote(tip)} className="flex items-start gap-2">
                           <div className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
                           <span className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">{tip}</span>

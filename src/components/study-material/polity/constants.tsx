@@ -2,29 +2,54 @@ export const chapters = {
 "Chapter 1: Making of the Constitution": [
     {
       heading: "Background & Demands",
+      headingHindi: "पृष्ठभूमि और मांगें",
       highlight: "Demand first raised by M.N. Roy (1934), later by INC (1935).",
+      highlightHindi: "मांग पहली बार एम.एन. रॉय (1934) द्वारा उठाई गई, बाद में आईएनसी (1935) द्वारा।",
       details: [
         "August Offer (1940) promised Constituent Assembly after war.",
         "Cripps Mission (1942) failed to satisfy nationalists.",
         "Cabinet Mission Plan (1946) led to formation of Constituent Assembly."
+      ],
+      detailsHindi: [
+        "अगस्त प्रस्ताव (1940) ने युद्ध के बाद संविधान सभा का वादा किया।",
+        "क्रिप्स मिशन (1942) राष्ट्रवादियों को संतुष्ट करने में असफल रहा।",
+        "कैबिनेट मिशन योजना (1946) ने संविधान सभा के गठन का नेतृत्व किया।"
       ],
       prelimsTips: [
         "First idea → M.N. Roy (1934).",
         "INC officially demanded in 1935 session.",
         "Cabinet Mission Plan is the actual source."
       ],
+      prelimsTipsHindi: [
+        "पहला विचार → एम.एन. रॉय (1934)।",
+        "आईएनसी ने आधिकारिक रूप से 1935 सत्र में मांग की।",
+        "कैबिनेट मिशन योजना वास्तविक स्रोत है।"
+      ],
       funFacts: [
         "Objective Resolution later became the Preamble of the Constitution.",
         "Cabinet Mission Plan proposed federal India with residual powers to Centre.",
         "Failure of negotiations contributed to Partition of India."
       ],
+      funFactsHindi: [
+        "उद्देश्य प्रस्ताव बाद में संविधान की प्रस्तावना बना।",
+        "कैबिनेट मिशन योजना ने केंद्र के पास अवशिष्ट शक्तियों के साथ संघीय भारत का प्रस्ताव रखा।",
+        "बातचीत की असफलता ने भारत के विभाजन में योगदान दिया।"
+      ],
       illustrativePrelimsQs: [
         "Who first demanded a Constituent Assembly for India? (Answer: M.N. Roy, 1934)",
         "Which mission proposed formation of Constituent Assembly? (Answer: Cabinet Mission, 1946)"
       ],
+      illustrativePrelimsQsHindi: [
+        "भारत के लिए संविधान सभा की मांग सबसे पहले किसने की? (उत्तर: एम.एन. रॉय, 1934)",
+        "किस मिशन ने संविधान सभा के गठन का प्रस्ताव रखा? (उत्तर: कैबिनेट मिशन, 1946)"
+      ],
       mainsPoints: [
         "Constituent Assembly formed to draft Constitution post-independence.",
         "Demands reflected rising Indian nationalism and political aspirations."
+      ],
+      mainsPointsHindi: [
+        "स्वतंत्रता के बाद संविधान का मसौदा तैयार करने के लिए संविधान सभा का गठन।",
+        "मांगों ने बढ़ते भारतीय राष्ट्रवाद और राजनीतिक आकांक्षाओं को दर्शाया।"
       ]
     },
     {
