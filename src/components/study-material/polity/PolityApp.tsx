@@ -2,12 +2,16 @@
 import { SEOHead } from "@/components/SEOHead";
 import ChatPanel from "../../chat-panel/ChatPanel";
 import PolityBook from "./PolityBook";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const PolityApp = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const [showChat, setShowChat] = useState(false);
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -50,13 +54,29 @@ const PolityApp = () => {
           </div>
         </header>
         
-        <div className="flex h-[calc(100vh-120px)]">
-          <div className="flex-1">
-            <PolityBook />
-          </div>
-          <div className="w-96 border-l border-border">
-            <ChatPanel />
-          </div>
+        <div className="relative h-[calc(100vh-120px)]">
+          <PolityBook />
+          
+          {/* Floating Chat Toggle Button */}
+          <Button
+            onClick={() => setShowChat(!showChat)}
+            className="fixed bottom-6 right-6 z-50 rounded-full h-14 w-14 shadow-lg"
+            size="icon"
+            variant={showChat ? "default" : "secondary"}
+          >
+            <MessageCircle className="h-6 w-6" />
+          </Button>
+
+          {/* Floating Chat Panel */}
+          {showChat && (
+            <div className={`fixed z-40 bg-card border border-border rounded-lg shadow-2xl ${
+              isMobile 
+                ? "inset-x-4 bottom-24 top-32" 
+                : "bottom-24 right-6 w-96 h-[500px]"
+            }`}>
+              <ChatPanel onClose={() => setShowChat(false)} />
+            </div>
+          )}
         </div>
       </div>
     </>

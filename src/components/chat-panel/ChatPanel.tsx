@@ -1,9 +1,13 @@
 import React, { useState } from "react";
-import { Send } from "lucide-react";
+import { Send, X } from "lucide-react";
 // Free AI using Hugging Face API
 import { Button } from "@/components/ui/button";
 
-const ChatPanel = () => {
+interface ChatPanelProps {
+  onClose?: () => void;
+}
+
+const ChatPanel = ({ onClose }: ChatPanelProps) => {
   const [messages, setMessages] = useState<Array<{role: "user" | "assistant", content: string}>>([
     { role: "assistant", content: "Hi! 👋 Ask me anything about Indian Polity." }
   ]);
@@ -93,9 +97,16 @@ const ChatPanel = () => {
 
   return (
     <div className="flex flex-col h-full bg-card">
-      <div className="p-4 border-b border-border">
-        <h3 className="font-semibold text-foreground">AI Study Assistant</h3>
-        <p className="text-sm text-muted-foreground">Ask questions about Indian Polity</p>
+      <div className="p-4 border-b border-border flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-foreground">AI Study Assistant</h3>
+          <p className="text-sm text-muted-foreground">Ask questions about Indian Polity</p>
+        </div>
+        {onClose && (
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((m, i) => (

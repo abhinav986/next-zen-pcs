@@ -1,22 +1,25 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Star, Lightbulb, Download, Bookmark, Play, CheckCircle } from "lucide-react";
+import { BookOpen, Star, Lightbulb, Download, Bookmark, Play, CheckCircle, Menu, X } from "lucide-react";
 import jsPDF from "jspdf";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
 import { chapters } from "./constants";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // ==================== ENRICHED UPSC CONTENT (same as before) ====================
 // ... keep the chapters object here ...
 
 const PolityBook = () => {
+  const isMobile = useIsMobile();
   const [selectedChapter, setSelectedChapter] = useState(
     "Chapter 1: Making of the Constitution"
   );
   const [notes, setNotes] = useState([]);
   const [completedChapters, setCompletedChapters] = useState(new Set());
-  const [showBookmarks, setShowBookmarks] = useState(true);
+  const [showBookmarks, setShowBookmarks] = useState(!isMobile);
+  const [showSidebar, setShowSidebar] = useState(!isMobile);
 
   const addNote = (point) => {
     if (!notes.includes(point)) {
@@ -94,19 +97,39 @@ const PolityBook = () => {
 
   return (
     <div className="flex h-full relative">
+      {/* Mobile Menu Button */}
+      {isMobile && (
+        <Button
+          onClick={() => setShowSidebar(!showSidebar)}
+          className="fixed top-5 left-4 z-50 rounded-full h-12 w-12 shadow-lg"
+          size="icon"
+          variant="outline"
+        >
+          {showSidebar ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </Button>
+      )}
+
       {/* Floating Bookmarks Button */}
       <Button
         onClick={() => setShowBookmarks(!showBookmarks)}
-        className="fixed top-5 right-6 z-50 rounded-full h-12 w-12 shadow-lg"
+        className={`fixed z-50 rounded-full h-12 w-12 shadow-lg ${
+          isMobile 
+            ? "top-5 right-16 w-10 h-10" 
+            : "top-5 right-6"
+        }`}
         size="icon"
         variant={showBookmarks ? "default" : "outline"}
       >
-        <Bookmark className="h-5 w-5" />
+        <Bookmark className={`${isMobile ? "h-4 w-4" : "h-5 w-5"}`} />
       </Button>
 
       {/* Bookmarks Panel */}
       {showBookmarks && (
-        <div className="fixed top-15 right-6 w-80 max-h-96 bg-card border border-border rounded-lg shadow-xl z-40 overflow-hidden">
+        <div className={`fixed bg-card border border-border rounded-lg shadow-xl z-40 overflow-hidden ${
+          isMobile 
+            ? "top-20 left-4 right-4 max-h-80" 
+            : "top-20 right-6 w-80 max-h-96"
+        }`}>
           <div className="p-4 border-b border-border bg-primary/5">
             <h3 className="font-semibold text-foreground flex items-center gap-2">
               <Star className="h-4 w-4 text-yellow-500" />
@@ -152,7 +175,13 @@ const PolityBook = () => {
       )}
 
       {/* Chapter Playlist Sidebar */}
-      <div className="w-80 bg-gradient-to-b from-card to-muted/20 border-r border-border overflow-y-auto">
+      <div className={`bg-gradient-to-b from-card to-muted/20 border-r border-border overflow-y-auto transition-all duration-300 ${
+        isMobile 
+          ? showSidebar 
+            ? "fixed inset-y-0 left-0 w-80 z-30" 
+            : "hidden"
+          : "w-80"
+      }`}>
         <div className="p-4 border-b border-border bg-primary/5">
           <h2 className="font-bold text-lg text-foreground flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" />
@@ -243,7 +272,9 @@ const PolityBook = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto p-6 bg-background">
+      <div className={`flex-1 overflow-y-auto bg-background ${
+        isMobile ? "p-4 pt-20" : "p-6"
+      }`}>
         <div className="max-w-4xl">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-foreground mb-2">{selectedChapter}</h1>
