@@ -15,6 +15,7 @@ import PolityTest from "./pages/PolityTest";
 const queryClient = new QueryClient();
 
 const App = () => (
+  // test
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
