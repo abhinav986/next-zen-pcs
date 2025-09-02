@@ -85,6 +85,18 @@ const TestSeries = () => {
       subject: 'Current Affairs',
       maxScore: 80,
       attempted: false
+    },
+    {
+      id: 'polity-advanced-new',
+      title: 'Indian Polity Advanced Test',
+      description: 'Comprehensive test on Indian Constitution, Articles, and Governance',
+      duration: 30,
+      questions: 10,
+      participants: 850,
+      difficulty: 'Hard',
+      subject: 'Polity',
+      maxScore: 20,
+      attempted: false
     }
   ];
 
@@ -225,12 +237,19 @@ const TestSeries = () => {
                             View Results
                           </Button>
                         </>
-                      ) : (
-                        <Button className="flex-1">
+                       ) : (
+                        <Button 
+                          className="flex-1"
+                          onClick={() => {
+                            if (test.id === 'polity-advanced-new') {
+                              window.location.href = '/polity-test';
+                            }
+                          }}
+                        >
                           <Target className="h-4 w-4 mr-2" />
                           Start Test
                         </Button>
-                      )}
+                       )}
                     </div>
                   </CardContent>
                 </Card>
