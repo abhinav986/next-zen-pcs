@@ -28,8 +28,8 @@ const PolityApp = () => {
     <>
       <SEOHead
         title="Indian Polity & Governance - UPSC Study Materials"
-        description="Comprehensive notes on Indian Constitution, governance systems, and political processes for UPSC Civil Services preparation."
-        keywords="Indian polity, UPSC governance, constitution notes, political science UPSC, civil services polity"
+        description="Show to ankush polity book"
+        keywords="Show to anksuh polity"
         structuredData={structuredData}
       />
       
