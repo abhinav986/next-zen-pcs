@@ -109,24 +109,35 @@ const PolityBook = () => {
 
   return (
     <div className="flex h-full relative">
+      {/* Mobile Backdrop */}
+      {isMobile && (showSidebar || showBookmarks) && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20"
+          onClick={() => {
+            setShowSidebar(false);
+            setShowBookmarks(false);
+          }}
+        />
+      )}
+
       {/* Mobile Menu Button */}
       {isMobile && (
         <Button
           onClick={() => setShowSidebar(!showSidebar)}
-          className="fixed top-5 left-4 z-50 rounded-full h-12 w-12 shadow-lg"
+          className="fixed top-4 left-4 z-50 rounded-full h-10 w-10 shadow-lg bg-card"
           size="icon"
           variant="outline"
         >
-          {showSidebar ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {showSidebar ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
         </Button>
       )}
 
       {/* Language Toggle Button */}
       <Button
         onClick={() => setIsHindi(!isHindi)}
-        className={`fixed z-50 rounded-full shadow-lg ${
+        className={`fixed z-50 rounded-full shadow-lg bg-card ${
           isMobile 
-            ? "top-5 right-24 w-10 h-10" 
+            ? "top-4 right-16 h-10 w-10" 
             : "top-5 right-20 h-12 w-12"
         }`}
         size="icon"
@@ -138,10 +149,10 @@ const PolityBook = () => {
       {/* Floating Bookmarks Button */}
       <Button
         onClick={() => setShowBookmarks(!showBookmarks)}
-        className={`fixed z-50 rounded-full h-12 w-12 shadow-lg ${
+        className={`fixed z-50 rounded-full shadow-lg bg-card ${
           isMobile 
-            ? "top-5 right-4 w-10 h-10" 
-            : "top-5 right-6"
+            ? "top-4 right-4 h-10 w-10" 
+            : "top-5 right-6 h-12 w-12"
         }`}
         size="icon"
         variant={showBookmarks ? "default" : "outline"}
@@ -151,9 +162,9 @@ const PolityBook = () => {
 
       {/* Bookmarks Panel */}
       {showBookmarks && (
-        <div className={`fixed bg-card border border-border rounded-lg shadow-xl z-40 overflow-hidden ${
+        <div className={`fixed bg-card border border-border rounded-lg shadow-2xl z-40 overflow-hidden ${
           isMobile 
-            ? "top-20 left-4 right-4 max-h-80" 
+            ? "top-16 left-4 right-4 max-h-[calc(100vh-8rem)]" 
             : "top-20 right-6 w-80 max-h-96"
         }`}>
           <div className="p-4 border-b border-border bg-primary/5">
@@ -299,7 +310,7 @@ const PolityBook = () => {
 
       {/* Main Content */}
       <div className={`flex-1 overflow-y-auto bg-background ${
-        isMobile ? "p-4 pt-20" : "p-6"
+        isMobile ? "p-4 pt-16" : "p-6"
       }`}>
         <div className="max-w-4xl">
           <div className="mb-6">
