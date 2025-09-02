@@ -22,6 +22,23 @@ const PolityBook = () => {
   const [showSidebar, setShowSidebar] = useState(!isMobile);
   const [isHindi, setIsHindi] = useState(false);
 
+  // Auto-manage bookmark visibility on mobile when sidebar toggles
+  const toggleSidebar = () => {
+    if (isMobile) {
+      if (!showSidebar) {
+        // Opening sidebar - close bookmarks
+        setShowBookmarks(false);
+        setShowSidebar(true);
+      } else {
+        // Closing sidebar - open bookmarks
+        setShowSidebar(false);
+        setShowBookmarks(true);
+      }
+    } else {
+      setShowSidebar(!showSidebar);
+    }
+  };
+
   const addNote = (point) => {
     if (!notes.includes(point)) {
       setNotes([...notes, point]);
@@ -123,7 +140,7 @@ const PolityBook = () => {
       {/* Mobile Menu Button */}
       {isMobile && (
         <Button
-          onClick={() => setShowSidebar(!showSidebar)}
+          onClick={toggleSidebar}
           className="fixed top-4 left-4 z-50 rounded-full h-10 w-10 shadow-lg bg-card"
           size="icon"
           variant="outline"
@@ -137,7 +154,7 @@ const PolityBook = () => {
         onClick={() => setIsHindi(!isHindi)}
         className={`fixed z-50 rounded-full shadow-lg bg-card ${
           isMobile 
-            ? "top-4 right-16 h-10 w-10" 
+            ? "top-4 right-4 h-10 w-10" 
             : "top-5 right-20 h-12 w-12"
         }`}
         size="icon"
@@ -146,25 +163,25 @@ const PolityBook = () => {
         <Languages className={`${isMobile ? "h-4 w-4" : "h-5 w-5"}`} />
       </Button>
 
-      {/* Floating Bookmarks Button */}
+      {/* Floating Bookmarks Button - Bottom positioned on mobile */}
       <Button
         onClick={() => setShowBookmarks(!showBookmarks)}
         className={`fixed z-50 rounded-full shadow-lg bg-card ${
           isMobile 
-            ? "top-4 right-4 h-10 w-10" 
+            ? "bottom-6 right-4 h-12 w-12" 
             : "top-5 right-6 h-12 w-12"
         }`}
         size="icon"
         variant={showBookmarks ? "default" : "outline"}
       >
-        <Bookmark className={`${isMobile ? "h-4 w-4" : "h-5 w-5"}`} />
+        <Bookmark className="h-5 w-5" />
       </Button>
 
       {/* Bookmarks Panel */}
       {showBookmarks && (
         <div className={`fixed bg-card border border-border rounded-lg shadow-2xl z-40 overflow-hidden ${
           isMobile 
-            ? "top-16 left-4 right-4 max-h-[calc(100vh-8rem)]" 
+            ? "bottom-20 left-4 right-4 max-h-[calc(100vh-12rem)]" 
             : "top-20 right-6 w-80 max-h-96"
         }`}>
           <div className="p-4 border-b border-border bg-primary/5">
