@@ -358,22 +358,25 @@ const PolityBook = () => {
                     />
                   </div>
                 )}
-                
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 p-4 rounded-xl border border-amber-200 dark:border-amber-800 mb-6">
-                  <div className="flex items-start gap-3">
-                    <Star className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-semibold text-amber-800 dark:text-amber-200 mb-1">
-                        {isHindi ? "मुख्य बिंदु" : "Key Point"}
-                      </h4>
-                      <p className="text-amber-700 dark:text-amber-300">
-                        {isHindi ? (topic.highlightHindi || topic.highlight) : topic.highlight}
-                      </p>
+
+                {topic?.highlight && 
+                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 p-4 rounded-xl border border-amber-200 dark:border-amber-800 mb-6">
+                    <div className="flex items-start gap-3">
+                      <Star className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold text-amber-800 dark:text-amber-200 mb-1">
+                          {isHindi ? "मुख्य बिंदु" : "Key Point"}
+                        </h4>
+                        <p className="text-amber-700 dark:text-amber-300">
+                          {isHindi ? (topic.highlightHindi || topic.highlight) : topic.highlight}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                }
                 
-                <details className="mt-6 cursor-pointer bg-accent/20 rounded-lg" open>
+                {topic?.details?.length && 
+                        <details className="mt-6 cursor-pointer bg-accent/20 rounded-lg" open>
                   <summary className="font-semibold text-foreground hover:text-primary transition-colors p-4 flex items-center gap-2">
                     <BookOpen className="w-4 h-4" />
                     {isHindi ? `विस्तृत नोट्स (${topic.details.length} बिंदु)` : `Detailed Notes (${topic.details.length} points)`}
@@ -397,6 +400,7 @@ const PolityBook = () => {
                     </div>
                   </div>
                 </details>
+                }
 
                 {/* Tables Section */}
                 {topic.tables && (
@@ -411,7 +415,7 @@ const PolityBook = () => {
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="border-b border-purple-300 dark:border-purple-700">
-                                {table.columns.map((column, colIdx) => (
+                                {table?.columns?.map((column, colIdx) => (
                                   <th key={colIdx} className="text-left p-2 font-semibold text-purple-800 dark:text-purple-200">
                                     {column}
                                   </th>
@@ -419,7 +423,7 @@ const PolityBook = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {table.rows.map((row, rowIdx) => (
+                              {table?.rows?.map((row, rowIdx) => (
                                 <tr 
                                   key={rowIdx} 
                                   onClick={() => addNote(`${table.title}: ${row.join(" - ")}`)}

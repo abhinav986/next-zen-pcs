@@ -335,9 +335,9 @@ export const chapters = {
       {
         title: "Salient Features of the Constitution",
         titleHindi: "संविधान की प्रमुख विशेषताएँ",
-        headers: ["Feature", "Description"],
-        headersHindi: ["विशेषता", "विवरण"],
-        data: [
+        columns: ["Feature", "Description"],
+        columnsHindi: ["विशेषता", "विवरण"],
+        rows: [
           ["Lengthiest Constitution", "Originally 395 Articles, now 465+."],
           ["Blend of Rigidity & Flexibility", "Some parts amendable by simple majority, others need special majority + ratification."],
           ["Federal with Unitary Bias", "Strong Centre, especially in emergencies."],
@@ -348,9 +348,9 @@ export const chapters = {
       {
         title: "Sources of the Constitution",
         titleHindi: "संविधान के स्रोत",
-        headers: ["Country/Source", "Features Borrowed"],
-        headersHindi: ["देश/स्रोत", "उधार ली गई विशेषताएँ"],
-        data: [
+        columns: ["Country/Source", "Features Borrowed"],
+        columnsHindi: ["देश/स्रोत", "उधार ली गई विशेषताएँ"],
+        rows: [
           ["Government of India Act, 1935", "Federal scheme, Office of Governor, Public Service Commissions, Emergency provisions, Administrative details."],
           ["UK", "Parliamentary system, Rule of Law, Legislative procedure, Single citizenship, Cabinet system, Bicameral Parliament."],
           ["USA", "Fundamental Rights, Independence of judiciary, Judicial review, Impeachment of President, Removal of judges, Vice-President’s office."],
@@ -476,9 +476,9 @@ export const chapters = {
       {
         title: "Keywords in the Preamble and their Meaning",
         titleHindi: "प्रस्तावना के प्रमुख शब्द और उनका अर्थ",
-        headers: ["Keyword", "Meaning"],
-        headersHindi: ["मुख्य शब्द", "अर्थ"],
-        data: [
+        columns: ["Keyword", "Meaning"],
+        columnsHindi: ["मुख्य शब्द", "अर्थ"],
+        rows: [
           ["Sovereign", "India is free to take decisions without external interference."],
           ["Socialist", "Commitment to reduce inequality and promote welfare state (added by 42nd Amendment)."],
           ["Secular", "State has no official religion; equal respect for all religions (added by 42nd Amendment)."],
@@ -560,9 +560,9 @@ export const chapters = {
       {
         title: "Fundamental Rights (Articles 12–35)",
         titleHindi: "मौलिक अधिकार (अनुच्छेद 12–35)",
-        headers: ["Category", "Articles", "Key Provisions"],
-        headersHindi: ["श्रेणी", "अनुच्छेद", "मुख्य प्रावधान"],
-        data: [
+        columns: ["Category", "Articles", "Key Provisions"],
+        columnsHindi: ["श्रेणी", "अनुच्छेद", "मुख्य प्रावधान"],
+        rows: [
           ["General", "Article 12–13", "Definition of State; laws inconsistent with Fundamental Rights void."],
           ["Right to Equality", "Article 14", "Equality before law & equal protection of laws."],
           ["Right to Equality", "Article 15", "Prohibition of discrimination on grounds of religion, race, caste, sex, place of birth."],
@@ -597,9 +597,9 @@ export const chapters = {
       {
         title: "Key Judgments on Fundamental Rights",
         titleHindi: "मौलिक अधिकारों पर प्रमुख निर्णय",
-        headers: ["Case", "Year", "Key Impact"],
-        headersHindi: ["मामला", "वर्ष", "मुख्य प्रभाव"],
-        data: [
+        columns: ["Case", "Year", "Key Impact"],
+        columnsHindi: ["मामला", "वर्ष", "मुख्य प्रभाव"],
+        rows: [
           ["Kesavananda Bharati v. State of Kerala", "1973", "Established Basic Structure Doctrine; FRs can be amended but not destroyed."],
           ["Indira Gandhi v. Raj Narain", "1975", "Judicial review upheld as part of Basic Structure."],
           ["ADM Jabalpur v. Shivkant Shukla", "1976", "Held that FRs can be suspended during Emergency; later overruled."],
@@ -619,9 +619,9 @@ export const chapters = {
       {
         title: "Key Amendments Related to Fundamental Rights",
         titleHindi: "मौलिक अधिकारों से संबंधित प्रमुख संशोधन",
-        headers: ["Amendment", "Year", "Key Impact"],
-        headersHindi: ["संशोधन", "वर्ष", "मुख्य प्रभाव"],
-        data: [
+        columns: ["Amendment", "Year", "Key Impact"],
+        columnsHindi: ["संशोधन", "वर्ष", "मुख्य प्रभाव"],
+        rows: [
           ["1st Amendment", "1951", "Added reasonable restrictions to Article 19; inserted 9th Schedule."],
           ["24th Amendment", "1971", "Parliament got power to amend any part of Constitution, including Fundamental Rights."],
           ["25th Amendment", "1971", "Curtailed right to property; Directive Principles given precedence over FRs in some cases."],
@@ -707,60 +707,60 @@ export const chapters = {
     "headingHindi": "निर्देशक सिद्धांतों का वर्गीकरण",
     "highlight": "DPSPs are classified into Socialist, Gandhian, Liberal-Intellectual and Administrative.",
     "highlightHindi": "निर्देशक सिद्धांत समाजवादी, गाँधीवादी, उदार-वैचारिक और प्रशासनिक वर्गों में विभाजित हैं।",
-    "table": {
+    "tables": [{
       "columns": ["Category", "Articles", "Provisions"],
-      "data": [
+      "rows": [
         ["Socialist", "38, 39, 39A, 41, 42, 43, 43A, 47", "Socio-economic justice, right to work, equal pay, health, maternity relief, co-operatives."],
         ["Gandhian", "40, 43, 43B, 46, 47, 48", "Village panchayats, cottage industries, cooperative societies, prohibition of liquor, promotion of agriculture & animal husbandry."],
         ["Liberal-Intellectual", "44, 45, 48, 48A, 49, 50, 51", "Uniform Civil Code, free education, separation of judiciary, environment protection, promotion of international peace."],
         ["Administrative", "50", "Separation of Judiciary from Executive at lower levels."]
       ]
-    }
+    }]
   },
   {
     "heading": "Directive Principles vs Fundamental Rights",
     "headingHindi": "निर्देशक सिद्धांत बनाम मौलिक अधिकार",
     "highlight": "FRs are enforceable, DPSPs are non-enforceable; together they form the 'conscience of the Constitution'.",
     "highlightHindi": "मौलिक अधिकार लागू किए जा सकते हैं, DPSPs लागू नहीं किए जा सकते; दोनों मिलकर संविधान की 'आत्मा' बनाते हैं।",
-    "table": {
+    "tables": [{
       "columns": ["Aspect", "Fundamental Rights", "Directive Principles"],
-      "data": [
+      "rows": [
         ["Enforceability", "Justiciable & legally enforceable.", "Non-justiciable, only guiding principles."],
         ["Nature", "Political democracy.", "Socio-economic democracy."],
         ["Aim", "Freedom & rights of individuals.", "Welfare of society as a whole."],
         ["Conflict", "Prevail over DPSPs in case of conflict (initially).", "Later balanced through amendments & judgments."]
       ]
-    }
+    }]
   },
   {
     "heading": "Landmark Judgments",
     "headingHindi": "महत्वपूर्ण न्यायिक निर्णय",
     "highlight": "Judiciary played crucial role in harmonizing FRs and DPSPs.",
     "highlightHindi": "न्यायपालिका ने मौलिक अधिकारों और DPSPs के सामंजस्य में महत्वपूर्ण भूमिका निभाई।",
-    "table": {
+    "tables": [{
       "columns": ["Case", "Year", "Judgment"],
-      "data": [
+      "rows": [
         ["Champakam Dorairajan", "1951", "FRs > DPSPs (Article 46 vs Article 29(2)) → First Constitutional Amendment (1951)."],
         ["Kesavananda Bharati", "1973", "Harmony & balance between FRs and DPSPs; Basic Structure Doctrine established."],
         ["Minerva Mills", "1980", "Limited power of Parliament to amend; FRs & DPSPs are complementary."],
         ["Unni Krishnan", "1993", "Right to education (DPSP) made enforceable → Article 21A (86th Amendment, 2002)."]
       ]
-    }
+    }]
   },
   {
     "heading": "Important Amendments Related to DPSPs",
     "headingHindi": "DPSPs से संबंधित महत्वपूर्ण संशोधन",
     "highlight": "Several constitutional amendments have expanded the scope of DPSPs.",
     "highlightHindi": "कई संवैधानिक संशोधनों ने DPSPs के दायरे का विस्तार किया है।",
-    "table": {
+    "tables": [{
       "columns": ["Amendment", "Year", "Provision"],
-      "data": [
+      "rows": [
         ["42nd Amendment", "1976", "Added 39A (free legal aid), 43A (workers’ participation), 48A (environment protection)."],
         ["44th Amendment", "1978", "Reduced right to property from FR to legal right, strengthening DPSPs."],
         ["86th Amendment", "2002", "Inserted Article 21A: Free and compulsory education (age 6-14)."],
         ["97th Amendment", "2011", "Promoted cooperative societies (Article 43B)."]
       ]
-    }
+    }]
   },
   {
     "heading": "Critical Analysis",
@@ -842,9 +842,9 @@ export const chapters = {
   {
     "heading": "Article 51A - Fundamental Duties",
     "headingHindi": "अनुच्छेद 51A - मौलिक कर्तव्य",
-    "table": {
+    "tables": [{
       "columns": ["Clause", "Duty"],
-      "data": [
+      "rows": [
         ["51A(a)", "To abide by the Constitution and respect its ideals and institutions, the National Flag and the National Anthem."],
         ["51A(b)", "To cherish and follow the noble ideals of the freedom struggle."],
         ["51A(c)", "To uphold and protect the sovereignty, unity, and integrity of India."],
@@ -857,30 +857,30 @@ export const chapters = {
         ["51A(j)", "To strive towards excellence in all spheres of individual and collective activity."],
         ["51A(k)", "To provide opportunities for education to children between 6 and 14 years (added by 86th Amendment, 2002)."]
       ]
-    }
+    }]
   },
   {
     "heading": "Important Amendments",
     "headingHindi": "महत्वपूर्ण संशोधन",
-    "table": {
+    "tables": [{
       "columns": ["Amendment", "Year", "Provision Added/Changed"],
-      "data": [
+      "rows": [
         ["42nd Amendment", "1976", "Inserted Part IV-A (Article 51A), listing 10 Fundamental Duties."],
         ["86th Amendment", "2002", "Added 11th duty under Article 51A(k): duty of parents/guardians to provide education to children (6–14 years)."]
       ]
-    }
+    }]
   },
   {
     "heading": "Landmark Judgments",
     "headingHindi": "महत्वपूर्ण न्यायिक निर्णय",
-    "table": {
+    "tables": [{
       "columns": ["Case", "Year", "Judgment"],
-      "data": [
+      "rows": [
         ["AIIMS Students Union v. AIIMS", "2001", "Held that Fundamental Duties are as important as Fundamental Rights."],
         ["MC Mehta v. Union of India", "1988", "Linked environmental protection (Art. 51A(g)) with citizens’ duty."],
         ["Ranganath Mishra Case", "2003", "Emphasized that Fundamental Duties are obligatory for all citizens."]
       ]
-    }
+    }]
   },
   {
     "heading": "UPSC Relevance",
@@ -935,9 +935,9 @@ export const chapters = {
   {
     "heading": "President of India",
     "headingHindi": "भारत के राष्ट्रपति",
-    "table": {
+    "tables": [{
       "columns": ["Aspect", "Details"],
-      "data": [
+      "rows": [
         ["Articles", "52-62"],
         ["Election", "Indirect, by Electoral College (Elected MPs + MLAs of States + UTs with Assemblies)"],
         ["Voting Method", "Proportional Representation by Single Transferable Vote"],
@@ -950,21 +950,21 @@ export const chapters = {
         ["Impeachment", "For violation of Constitution; requires special majority in both Houses"],
         ["Special Role", "Supreme Commander of Armed Forces"]
       ]
-    }
+    }]
   },
   {
     "heading": "Powers of the President",
     "headingHindi": "राष्ट्रपति की शक्तियाँ",
-    "table": {
+    "tables": [{
       "columns": ["Type", "Details"],
-      "data": [
+      "rows": [
         ["Executive", "Appoints PM, Ministers, Governors, Judges of SC & HC, CAG, Election Commissioners, etc."],
         ["Legislative", "Summons, prorogues Parliament, dissolves Lok Sabha, nominates members (12 to RS, 2 to LS)"],
         ["Judicial", "Pardoning powers under Article 72 – Pardon, Reprieve, Respite, Remission, Commutation"],
         ["Financial", "Money Bills introduced only with prior recommendation of President; causes Budget to be laid before Parliament"],
         ["Emergency", "Can declare National, State, and Financial Emergencies"]
       ]
-    }
+    }]
   },
   {
   "heading": "Vice-President of India",
@@ -991,7 +991,7 @@ export const chapters = {
     {
       "title": "Election of Vice-President",
       "titleHindi": "उपराष्ट्रपति का निर्वाचन",
-      "headers": ["Aspect", "Details"],
+      "columns": ["Aspect", "Details"],
       "rows": [
         ["Electoral College", "Members of both Houses of Parliament (elected + nominated)"],
         ["Voting System", "Proportional Representation by Single Transferable Vote (STV)"],
@@ -1002,7 +1002,7 @@ export const chapters = {
     {
       "title": "Comparison: President vs Vice-President",
       "titleHindi": "तुलना: राष्ट्रपति बनाम उपराष्ट्रपति",
-      "headers": ["Aspect", "President", "Vice-President"],
+      "columns": ["Aspect", "President", "Vice-President"],
       "rows": [
         ["Electoral College", "MPs + MLAs of states + UTs", "Only MPs (both Houses)"],
         ["Oath", "By CJI (or senior-most SC judge)", "By President of India"],
@@ -1090,7 +1090,7 @@ export const chapters = {
     {
       "title": "Types of Ministers in India",
       "titleHindi": "भारत में मंत्रियों के प्रकार",
-      "headers": ["Category", "Role"],
+      "columns": ["Category", "Role"],
       "rows": [
         ["Cabinet Ministers", "Part of core decision-making body; head important ministries."],
         ["Ministers of State (Independent Charge)", "Handle specific ministries independently."],
@@ -1101,7 +1101,7 @@ export const chapters = {
     {
       "title": "President vs Prime Minister",
       "titleHindi": "राष्ट्रपति बनाम प्रधानमंत्री",
-      "headers": ["Aspect", "President", "Prime Minister"],
+      "columns": ["Aspect", "President", "Prime Minister"],
       "rows": [
         ["Position", "Nominal head (de jure)", "Real head (de facto)"],
         ["Election/Appointment", "Indirectly elected", "Appointed by President but must enjoy majority support"],
@@ -1174,9 +1174,9 @@ export const chapters = {
   {
     "heading": "Council of Ministers",
     "headingHindi": "मंत्रिपरिषद",
-    "table": {
+    "tables": [{
       "columns": ["Aspect", "Details"],
-      "data": [
+      "rows": [
         ["Articles", "74 & 75"],
         ["Composition", "PM + Cabinet Ministers + Ministers of State + Deputy Ministers"],
         ["Collective Responsibility", "Council is collectively responsible to Lok Sabha"],
@@ -1184,7 +1184,7 @@ export const chapters = {
         ["Individual Responsibility", "Minister holds office during the pleasure of President"],
         ["Max Strength", "91st Amendment (2003): Max 15% of Lok Sabha strength"]
       ]
-    }
+    }]
   },
   {
     "heading": "Comparison Tables",
@@ -1193,7 +1193,7 @@ export const chapters = {
       {
         "title": "President vs Prime Minister",
         "columns": ["Aspect", "President", "Prime Minister"],
-        "data": [
+        "rows": [
           ["Position", "Nominal Executive", "Real Executive"],
           ["Election", "Indirect (Electoral College)", "Leader of Majority in Lok Sabha"],
           ["Powers", "Formal powers, acts on aid & advice", "Controls Cabinet, real authority"],
@@ -1203,7 +1203,7 @@ export const chapters = {
       {
         "title": "Cabinet vs Council of Ministers",
         "columns": ["Aspect", "Cabinet", "Council of Ministers"],
-        "data": [
+        "rows": [
           ["Composition", "Senior Ministers", "All Ministers (Cabinet, MoS, Deputy)"],
           ["Role", "Policy-making body", "Advisory + implementation"],
           ["Size", "Smaller", "Larger"],
@@ -1239,7 +1239,7 @@ export const chapters = {
     {
       "title": "Comparison: Attorney General of India vs Advocate General of State",
       "titleHindi": "तुलना: भारत के महान्यायवादी बनाम राज्य के महाधिवक्ता",
-      "headers": ["Aspect", "Attorney General of India", "Advocate General of State"],
+      "columns": ["Aspect", "Attorney General of India", "Advocate General of State"],
       "rows": [
         ["Constitutional Article", "Article 76", "Article 165"],
         ["Appointing Authority", "President", "Governor"],
@@ -1294,28 +1294,28 @@ export const chapters = {
   {
     "heading": "Important Amendments",
     "headingHindi": "महत्वपूर्ण संशोधन",
-    "table": {
+    "tables": [{
       "columns": ["Amendment", "Year", "Provision"],
-      "data": [
+      "rows": [
         ["42nd Amendment", "1976", "Made President bound by advice of Council of Ministers"],
         ["44th Amendment", "1978", "President can send advice for reconsideration once, but must accept after reconsideration"],
         ["61st Amendment", "1989", "Reduced voting age in Presidential election from 21 to 18 years"],
         ["91st Amendment", "2003", "Limited Council of Ministers to 15% of Lok Sabha strength"]
       ]
-    }
+    }]
   },
   {
     "heading": "Landmark Judgments",
     "headingHindi": "महत्वपूर्ण न्यायिक निर्णय",
-    "table": {
+    "tables": [{
       "columns": ["Case", "Year", "Judgment"],
-      "data": [
+      "rows": [
         ["Shamsher Singh v. State of Punjab", "1974", "Held President is constitutional head, real power lies with Council of Ministers"],
         ["S. R. Bommai v. Union of India", "1994", "President’s Rule subject to judicial review"],
         ["Kesavananda Bharati v. State of Kerala", "1973", "Parliament cannot alter basic structure; executive bound by Constitution"],
         ["Rameshwar Prasad v. Union of India", "2006", "Dissolution of Assembly before floor test unconstitutional"]
       ]
-    }
+    }]
   },
   {
     "heading": "UPSC Relevance",
@@ -1376,7 +1376,7 @@ export const chapters = {
       {
         "title": "Composition of Rajya Sabha",
         "titleHindi": "राज्यसभा की संरचना",
-        "headers": ["Category", "Maximum Strength", "Current Strength"],
+        "columns": ["Category", "Maximum Strength", "Current Strength"],
         "rows": [
           ["Elected Members (States + UTs)", "238", "233"],
           ["Nominated Members", "12", "12"],
@@ -1450,7 +1450,7 @@ export const chapters = {
       {
         "title": "Composition of Lok Sabha",
         "titleHindi": "लोकसभा की संरचना",
-        "headers": ["Category", "Maximum Strength", "Current Strength"],
+        "columns": ["Category", "Maximum Strength", "Current Strength"],
         "rows": [
           ["States", "530", "530"],
           ["Union Territories", "20", "13"],
@@ -1529,7 +1529,7 @@ export const chapters = {
       {
         "title": "Parliament’s Powers under Constitution",
         "titleHindi": "संविधान के अंतर्गत संसद की शक्तियाँ",
-        "headers": ["Type of Power", "Description", "Articles"],
+        "columns": ["Type of Power", "Description", "Articles"],
         "rows": [
           ["Legislative", "Lawmaking on Union & Concurrent List", "245–246"],
           ["State List Override", "Special powers during national interest/emergency", "249, 250, 252, 253"],
@@ -1611,7 +1611,7 @@ export const chapters = {
       {
         "title": "Important Parliamentary Motions",
         "titleHindi": "महत्वपूर्ण संसदीय प्रस्ताव",
-        "headers": ["Motion", "Purpose", "Effect"],
+        "columns": ["Motion", "Purpose", "Effect"],
         "rows": [
           ["Adjournment Motion", "To discuss urgent matter of public importance", "If admitted, House suspends normal business"],
           ["Censure Motion", "To censure Council of Ministers", "If passed, requires resignation"],
@@ -1690,7 +1690,7 @@ export const chapters = {
       {
         "title": "Comparison of Types of Bills",
         "titleHindi": "विधेयकों के प्रकारों की तुलना",
-        "headers": ["Type of Bill", "Introduced in", "Rajya Sabha Role", "President’s Options"],
+        "columns": ["Type of Bill", "Introduced in", "Rajya Sabha Role", "President’s Options"],
         "rows": [
           ["Ordinary Bill", "Either House", "Full powers", "Assent/Withhold/Return"],
           ["Money Bill", "Lok Sabha only", "Advisory (can suggest changes)", "Only Assent or Withhold"],
@@ -1769,7 +1769,7 @@ export const chapters = {
       {
         "title": "Types of Parliamentary Committees",
         "titleHindi": "संसदीय समितियों के प्रकार",
-        "headers": ["Committee Type", "Nature", "Examples"],
+        "columns": ["Committee Type", "Nature", "Examples"],
         "rows": [
           ["Standing Committees", "Permanent, regular work", "PAC, Estimates Committee, DRSCs"],
           ["Ad-hoc Committees", "Temporary, issue-specific", "JPC on 2G Scam, Railway Convention Committee"]
@@ -1778,7 +1778,7 @@ export const chapters = {
       {
         "title": "Parliamentary Privileges (Article 105)",
         "titleHindi": "संसदीय विशेषाधिकार (अनुच्छेद 105)",
-        "headers": ["Privilege", "Explanation"],
+        "columns": ["Privilege", "Explanation"],
         "rows": [
           ["Freedom of Speech", "MPs can speak freely in Parliament without fear of legal action"],
           ["Immunity from Court", "No legal proceedings for statements made inside House"],
@@ -1857,7 +1857,7 @@ export const chapters = {
         {
           "title": "Jurisdiction of Supreme Court",
           "titleHindi": "सुप्रीम कोर्ट का अधिकार क्षेत्र",
-          "headers": ["Type", "Description", "Articles"],
+          "columns": ["Type", "Description", "Articles"],
           "rows": [
             ["Original", "Disputes between Union & States", "131"],
             ["Appellate", "Appeals in civil, criminal, constitutional matters", "132–136"],
@@ -1926,7 +1926,7 @@ export const chapters = {
         {
           "title": "Difference between Article 32 and 226",
           "titleHindi": "अनुच्छेद 32 और 226 के बीच अंतर",
-          "headers": ["Aspect", "Article 32 (SC)", "Article 226 (HC)"],
+          "columns": ["Aspect", "Article 32 (SC)", "Article 226 (HC)"],
           "rows": [
             ["Scope", "Only for Fundamental Rights", "For FRs + other legal rights"],
             ["Jurisdiction", "Nationwide", "Territorial (State/Region)"],
@@ -2046,7 +2046,7 @@ export const chapters = {
       "राज्यपाल की भूमिका को केंद्र के एजेंट के रूप में देखने पर उत्पन्न विवादों पर चर्चा कीजिए।",
       "सर्कारिया और पुंछी आयोग की राज्यपाल के कार्यालय से संबंधित सिफारिशों की समीक्षा कीजिए।"
     ],
-    "table": {
+    "tables": [{
       "title": "Comparison: President vs Governor",
       "columns": ["Feature", "President", "Governor"],
       "rows": [
@@ -2055,7 +2055,7 @@ export const chapters = {
         ["Tenure", "5 years (can be re-elected)", "5 years (holds office at President’s pleasure)"],
         ["Powers", "Executive Head of Union", "Executive Head of State"]
       ]
-    }
+    }]
   },
   {
   "heading": "Chief Minister & State Council of Ministers",
@@ -2114,7 +2114,7 @@ export const chapters = {
     "राज्य में वास्तविक कार्यपालिका प्राधिकारी के रूप में मुख्यमंत्री की भूमिका पर चर्चा कीजिए।",
     "आलोचनात्मक रूप से परीक्षा कीजिए कि क्या राज्यपाल मुख्यमंत्री की नियुक्ति में अपने विवेकाधिकार का दुरुपयोग करते हैं।"
   ],
-  "table": {
+  "tables": [{
     "title": "CM vs Governor: Powers",
     "columns": ["Aspect", "Governor", "Chief Minister"],
     "rows": [
@@ -2123,7 +2123,7 @@ export const chapters = {
       ["Responsibility", "To Union Government", "To State Legislative Assembly"],
       ["Tenure", "5 years (at President’s pleasure)", "Depends on Assembly confidence"]
     ]
-  }
+  }]
   },
   {
   "heading": "State Legislature (Vidhan Sabha & Vidhan Parishad)",
@@ -2184,7 +2184,7 @@ export const chapters = {
     "भारतीय राज्यों में द्विसदनीयता की आवश्यकता और प्रासंगिकता का आलोचनात्मक मूल्यांकन कीजिए।",
     "विधानसभा और विधान परिषद की संरचना और शक्तियों पर चर्चा कीजिए।"
   ],
-  "table": {
+  "tables": [{
     "title": "Comparison between Vidhan Sabha & Vidhan Parishad",
     "columns": ["Aspect", "Vidhan Sabha", "Vidhan Parishad"],
     "rows": [
@@ -2193,7 +2193,7 @@ export const chapters = {
       ["Strength", "60–500 (Article 170)", "Min 40, Max 1/3rd of Assembly (Article 171)"],
       ["Role", "Major legislative authority", "Revisory role, limited powers"]
     ]
-  }
+  }]
   },
   {
   "heading": "Governor–Legislature Relationship & Law-Making Process",
@@ -2258,7 +2258,7 @@ export const chapters = {
     "राज्यपाल की विधायी शक्तियों की राज्य विधानमंडल के संदर्भ में परीक्षा कीजिए।",
     "भारत में राज्यपालों से जुड़ी विवादों का आलोचनात्मक विश्लेषण कीजिए (केरल, महाराष्ट्र, तमिलनाडु के उदाहरण दें)।"
   ],
-  "table": {
+  "tables": [{
     "title": "Comparison: Ordinance Power of Governor vs President",
     "columns": ["Aspect", "Governor (Article 213)", "President (Article 123)"],
     "rows": [
@@ -2267,7 +2267,7 @@ export const chapters = {
       ["Approval", "Must be approved within 6 weeks of Legislature reassembly", "Must be approved within 6 weeks of Parliament reassembly"],
       ["Discretion", "More scope for discretion (reservation, withholding assent)", "Less discretion compared to Governor"]
     ]
-  }
+  }]
   },
   {
   "heading": "Advocate General & High Court (Brief Overview)",
@@ -2332,7 +2332,7 @@ export const chapters = {
     "अनुच्छेद 226 के तहत उच्च न्यायालय की रिट क्षेत्राधिकार के महत्व पर चर्चा कीजिए।",
     "रिट और न्यायिक पुनर्विलोकन के संदर्भ में उच्च न्यायालय और सर्वोच्च न्यायालय की शक्तियों की तुलना कीजिए।"
   ],
-  "table": {
+  "tables": [{
     "title": "Comparison: Advocate General vs Attorney General",
     "columns": ["Aspect", "Advocate General (State)", "Attorney General (Union)"],
     "rows": [
@@ -2342,7 +2342,7 @@ export const chapters = {
       ["Advises", "State Government", "Union Government"],
       ["Remuneration", "Decided by Governor", "Decided by President"]
     ]
-  }
+  }]
 }
 ],
 "Chapter 11: Parliamentary System": [
@@ -2405,7 +2405,7 @@ export const chapters = {
     "कैसे सामूहिक जिम्मेदारी और जवाबदेही इस प्रणाली में सुनिश्चित होती है, चर्चा करें।",
     "भारत जैसे बहु-पक्षीय संघीय ढांचे में संसदीय प्रणाली द्वारा सामना किए गए चुनौतियों का विश्लेषण कीजिए।"
   ],
-  "table": {
+  "tables": [{
     "title": "Nominal vs Real Executive in India",
     "columns": ["Aspect", "Nominal Executive", "Real Executive"],
     "rows": [
@@ -2414,7 +2414,7 @@ export const chapters = {
       ["Accountable to", "Legislature indirectly", "Legislature directly (collective responsibility)"],
       ["Role", "Ceremonial head", "Decision-making authority"]
     ]
-  }
+  }]
   },
   {
   "heading": "Features of Parliamentary System",
@@ -2479,7 +2479,7 @@ export const chapters = {
     "भारत में कार्यपालिका और विधायिका के बीच शक्ति के मिश्रण पर चर्चा कीजिए।",
     "बहु-पक्षीय और गठबंधन परिस्थितियों में संसदीय प्रणाली की अनुकूलता का विश्लेषण कीजिए।"
   ],
-  "table": {
+  "tables": [{
     "title": "Parliamentary vs Presidential System",
     "columns": ["Feature", "Parliamentary System", "Presidential System"],
     "rows": [
@@ -2490,7 +2490,7 @@ export const chapters = {
       ["Flexibility", "Cabinet can be reshuffled, coalitions feasible", "Less flexible, fixed executive"],
       ["Accountability", "Direct to legislature", "Indirect, through elections"]
     ]
-  }
+  }]
  },
  {
   "heading": "Merits & Demerits of Parliamentary System",
@@ -2565,7 +2565,7 @@ export const chapters = {
     "चर्चा करें कि गठबंधन राजनीति और बहु-पक्षीय परिदृश्य सरकार की स्थिरता को कैसे प्रभावित करता है।",
     "भारत में संसदीय प्रणाली की सीमाओं का आलोचनात्मक विश्लेषण करें और सुधार सुझाएँ।"
   ],
-  "table": {
+  "tables": [{
     "title": "Merits vs Demerits of Parliamentary System",
     "columns": ["Aspect", "Merits", "Demerits"],
     "rows": [
@@ -2575,7 +2575,7 @@ export const chapters = {
       ["Adaptability", "Works in multi-party system", "Frequent political negotiations required"],
       ["Responsibility", "Collective responsibility ensures coordination", "Party politics may affect decision-making"]
     ]
-  }
+  }]
   },
   {
   "heading": "Comparison: Parliamentary vs Presidential System",
@@ -2640,7 +2640,7 @@ export const chapters = {
     "व्याख्या करें कि भारत ने राष्ट्रपति प्रणाली के बजाय संसदीय प्रणाली क्यों अपनाई।",
     "विश्लेषण करें कि शक्ति के मिश्रण से भारतीय शासन में जवाबदेही और समन्वय कैसे सुनिश्चित होता है।"
   ],
-  "table": {
+  "tables": [{
     "title": "Parliamentary vs Presidential System (Summary)",
     "columns": ["Aspect", "Parliamentary System", "Presidential System"],
     "rows": [
@@ -2652,7 +2652,7 @@ export const chapters = {
       ["Flexibility", "Cabinet reshuffles, coalition feasible", "Less flexible"],
       ["Accountability", "Direct to legislature", "Indirect, through elections"]
     ]
-  }
+  }]
 }
 ]
 };
