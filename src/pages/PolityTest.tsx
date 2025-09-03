@@ -25,6 +25,7 @@ interface UserAnswer {
   questionId: string;
   answer: string;
   isCorrect: boolean;
+  topic: string;
 }
 
 const PolityTest = () => {
@@ -91,7 +92,8 @@ const PolityTest = () => {
     setUserAnswers([...userAnswers, {
       questionId: currentQuestion.id,
       answer: selectedAnswer,
-      isCorrect
+      isCorrect,
+      topic: currentQuestion.topic
     }]);
 
     setSelectedAnswer("");
@@ -142,6 +144,37 @@ const PolityTest = () => {
     return "text-red-600";
   };
 
+  const getSectionWiseAnalysis = () => {
+    const sectionStats: Record<string, { correct: number; total: number; percentage: number }> = {};
+    
+    userAnswers.forEach(answer => {
+      if (!sectionStats[answer.topic]) {
+        sectionStats[answer.topic] = { correct: 0, total: 0, percentage: 0 };
+      }
+      sectionStats[answer.topic].total++;
+      if (answer.isCorrect) {
+        sectionStats[answer.topic].correct++;
+      }
+    });
+
+    // Calculate percentages
+    Object.keys(sectionStats).forEach(topic => {
+      sectionStats[topic].percentage = Math.round(
+        (sectionStats[topic].correct / sectionStats[topic].total) * 100
+      );
+    });
+
+    return sectionStats;
+  };
+
+  const getWeakSections = () => {
+    const sectionStats = getSectionWiseAnalysis();
+    return Object.entries(sectionStats)
+      .filter(([_, stats]) => stats.percentage < 60)
+      .sort((a, b) => a[1].percentage - b[1].percentage)
+      .map(([topic, _]) => topic);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -175,6 +208,9 @@ const PolityTest = () => {
 
   if (showResults) {
     const percentage = getScorePercentage();
+    const sectionStats = getSectionWiseAnalysis();
+    const weakSections = getWeakSections();
+    
     return (
       <div className="min-h-screen bg-background p-4">
         <SEOHead 
@@ -194,6 +230,52 @@ const PolityTest = () => {
             </CardHeader>
           </Card>
 
+          {/* Section-wise Analysis */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-xl">Section-wise Performance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2">
+                {Object.entries(sectionStats).map(([topic, stats]) => (
+                  <div key={topic} className="p-4 border rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-medium text-sm">{topic}</h3>
+                      <span className={`text-sm font-bold ${getScoreColor(stats.percentage)}`}>
+                        {stats.percentage}%
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mb-2">
+                      {stats.correct}/{stats.total} questions correct
+                    </div>
+                    <Progress value={stats.percentage} className="h-2" />
+                  </div>
+                ))}
+              </div>
+              
+              {weakSections.length > 0 && (
+                <div className="mt-6 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
+                    Areas for Improvement
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {weakSections.map((topic) => (
+                      <span 
+                        key={topic}
+                        className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 text-xs rounded"
+                      >
+                        {topic} ({sectionStats[topic].percentage}%)
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-red-600 dark:text-red-300 mt-2">
+                    Focus on these topics for better performance
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <div className="space-y-4">
             {questions.map((question, index) => {
               const userAnswer = userAnswers[index];
@@ -209,6 +291,11 @@ const PolityTest = () => {
                         )}
                       </div>
                       <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="px-2 py-1 bg-secondary/10 text-secondary-foreground text-xs rounded">
+                            {question.topic}
+                          </span>
+                        </div>
                         <h3 className="font-semibold mb-2">
                           Q{index + 1}. {question.question_text}
                         </h3>
