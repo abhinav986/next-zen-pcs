@@ -4,9 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Clock, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
+import { Clock, CheckCircle, XCircle, ArrowLeft, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
 
@@ -175,6 +175,31 @@ const PolityTest = () => {
       .map(([topic, _]) => topic);
   };
 
+  // Map topic names to chapter names for PolityBook navigation
+  const getChapterForTopic = (topic: string) => {
+    const topicToChapterMap: Record<string, string> = {
+      "Constitution Making": "Chapter 1: Making of the Constitution",
+      "Constitutional Features": "Chapter 2: Salient Features of the Constitution",
+      "Preamble": "Chapter 3: The Preamble",
+      "Fundamental Rights": "Chapter 4: Fundamental Rights",
+      "Fundamental Duties": "Chapter 5: Fundamental Duties",
+      "Directive Principles": "Chapter 6: Directive Principles of State Policy",
+      "Amendment Procedure": "Chapter 7: Constitutional Amendments",
+      "Basic Structure": "Chapter 8: Basic Structure of the Constitution",
+      "Federal System": "Chapter 9: Federal Features",
+      "Centre-State Relations": "Chapter 10: Centre-State Relations",
+      "Inter-State Relations": "Chapter 11: Inter-State Relations",
+      "Emergency Provisions": "Chapter 12: Emergency Provisions",
+      "Local Government": "Chapter 13: Local Government",
+      "Constitutional Bodies": "Chapter 14: Constitutional Bodies",
+      "Elections": "Chapter 15: Elections and Electoral Processes",
+      "Political Parties": "Chapter 16: Political Parties",
+      "Pressure Groups": "Chapter 17: Pressure Groups and Movements"
+    };
+    
+    return topicToChapterMap[topic] || "Chapter 1: Making of the Constitution";
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -258,7 +283,7 @@ const PolityTest = () => {
                   <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
                     Areas for Improvement
                   </h4>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 mb-3">
                     {weakSections.map((topic) => (
                       <span 
                         key={topic}
@@ -268,9 +293,21 @@ const PolityTest = () => {
                       </span>
                     ))}
                   </div>
-                  <p className="text-xs text-red-600 dark:text-red-300 mt-2">
+                  <p className="text-xs text-red-600 dark:text-red-300 mb-3">
                     Focus on these topics for better performance
                   </p>
+                  <div className="flex flex-wrap gap-2">
+                    {weakSections.map((topic) => (
+                      <Link
+                        key={topic}
+                        to={`/study-materials/polity?chapter=${encodeURIComponent(getChapterForTopic(topic))}`}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                      >
+                        <BookOpen className="w-3 h-3" />
+                        Study {topic}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>

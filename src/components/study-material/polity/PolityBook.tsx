@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Star, Lightbulb, Download, Bookmark, Play, CheckCircle, Menu, X, Languages, Table, Info, Target } from "lucide-react";
@@ -7,20 +7,39 @@ import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
 import { chapters } from "./constants";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSearchParams } from "react-router-dom";
 
 // ==================== ENRICHED UPSC CONTENT (same as before) ====================
 // ... keep the chapters object here ...
 
 const PolityBook = () => {
   const isMobile = useIsMobile();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedChapter, setSelectedChapter] = useState(
-    "Chapter 1: Making of the Constitution"
+    searchParams.get('chapter') || "Chapter 1: Making of the Constitution"
   );
   const [notes, setNotes] = useState([]);
   const [completedChapters, setCompletedChapters] = useState(new Set());
   const [showBookmarks, setShowBookmarks] = useState(!isMobile);
   const [showSidebar, setShowSidebar] = useState(!isMobile);
   const [isHindi, setIsHindi] = useState(false);
+
+  // Update URL when chapter changes
+  useEffect(() => {
+    if (selectedChapter !== "Chapter 1: Making of the Constitution") {
+      setSearchParams({ chapter: selectedChapter });
+    } else {
+      setSearchParams({});
+    }
+  }, [selectedChapter, setSearchParams]);
+
+  // Handle URL changes
+  useEffect(() => {
+    const chapterParam = searchParams.get('chapter');
+    if (chapterParam && chapters[chapterParam] && chapterParam !== selectedChapter) {
+      setSelectedChapter(chapterParam);
+    }
+  }, [searchParams]);
 
   // Auto-manage bookmark visibility on mobile when sidebar toggles
   const toggleSidebar = () => {
