@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Star, Lightbulb, Download, Bookmark, Play, CheckCircle, Menu, X, Languages } from "lucide-react";
+import { BookOpen, Star, Lightbulb, Download, Bookmark, Play, CheckCircle, Menu, X, Languages, Table, Info, Target } from "lucide-react";
 import jsPDF from "jspdf";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
@@ -397,6 +397,92 @@ const PolityBook = () => {
                     </div>
                   </div>
                 </details>
+
+                {/* Tables Section */}
+                {topic.tables && (
+                  <div className="mt-6 space-y-4">
+                    {topic.tables.map((table, tableIdx) => (
+                      <div key={tableIdx} className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 p-4 rounded-xl border border-purple-200 dark:border-purple-800">
+                        <h4 className="font-semibold flex items-center gap-2 text-purple-800 dark:text-purple-200 mb-3">
+                          <Table className="w-5 h-5" />
+                          {table.title}
+                        </h4>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b border-purple-300 dark:border-purple-700">
+                                {table.columns.map((column, colIdx) => (
+                                  <th key={colIdx} className="text-left p-2 font-semibold text-purple-800 dark:text-purple-200">
+                                    {column}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {table.rows.map((row, rowIdx) => (
+                                <tr 
+                                  key={rowIdx} 
+                                  onClick={() => addNote(`${table.title}: ${row.join(" - ")}`)}
+                                  className="border-b border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/20 cursor-pointer transition-colors"
+                                >
+                                  {row.map((cell, cellIdx) => (
+                                    <td key={cellIdx} className="p-2 text-purple-700 dark:text-purple-300">
+                                      {cell}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Fun Facts Section */}
+                {topic.funFacts && (
+                  <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border border-green-200 dark:border-green-800 rounded-xl">
+                    <h4 className="font-semibold flex items-center gap-2 text-green-800 dark:text-green-200 mb-3">
+                      <Info className="w-5 h-5" />
+                      {isHindi ? "दिलचस्प तथ्य" : "Fun Facts"}
+                    </h4>
+                    <div className="space-y-2">
+                      {(isHindi ? (topic.funFactsHindi || topic.funFacts) : topic.funFacts).map((fact, i) => (
+                        <div 
+                          key={i} 
+                          onClick={() => addNote(fact)}
+                          className="flex items-start gap-2 p-2 rounded hover:bg-green-100 dark:hover:bg-green-900/20 cursor-pointer transition-colors"
+                        >
+                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0 mt-2"></div>
+                          <span className="text-sm text-green-700 dark:text-green-300 leading-relaxed">{fact}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Mains Points Section */}
+                {topic.mainsPoints && (
+                  <div className="mt-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 border border-orange-200 dark:border-orange-800 rounded-xl">
+                    <h4 className="font-semibold flex items-center gap-2 text-orange-800 dark:text-orange-200 mb-3">
+                      <Target className="w-5 h-5" />
+                      {isHindi ? "मुख्य परीक्षा के मुख्य बिंदु" : "Mains Key Points"}
+                    </h4>
+                    <div className="space-y-2">
+                      {(isHindi ? (topic.mainsPointsHindi || topic.mainsPoints) : topic.mainsPoints).map((point, i) => (
+                        <div 
+                          key={i}
+                          onClick={() => addNote(point)}
+                          className="flex items-start gap-2 p-2 rounded hover:bg-orange-100 dark:hover:bg-orange-900/20 cursor-pointer transition-colors"
+                        >
+                          <div className="w-1.5 h-1.5 bg-orange-500 rounded-full flex-shrink-0 mt-2"></div>
+                          <span className="text-sm text-orange-700 dark:text-orange-300 leading-relaxed">{point}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Prelims Tip Box */}
                 {topic.prelimsTips && (
