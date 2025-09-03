@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Clock, CheckCircle, XCircle, ArrowLeft, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
 
@@ -31,14 +31,24 @@ interface UserAnswer {
 const PolityTest = () => {
   // abhi
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const chapterFilter = searchParams.get('chapter');
+  
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string>("");
   const [isTestCompleted, setIsTestCompleted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes
+  const [timeLeft, setTimeLeft] = useState(chapterFilter ? 900 : 1800); // 15 mins for chapter, 30 for full test
   const [isLoading, setIsLoading] = useState(true);
   const [showResults, setShowResults] = useState(false);
+
+  const getTestTitle = () => {
+    if (chapterFilter) {
+      return `${chapterFilter} - Practice Test`;
+    }
+    return "Indian Polity Advanced Test";
+  };
 
   useEffect(() => {
     fetchQuestions();
@@ -55,10 +65,32 @@ const PolityTest = () => {
 
   const fetchQuestions = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('polity_questions')
-        .select('*')
-        .limit(10);
+        .select('*');
+      
+      // Add chapter filter if specified
+      if (chapterFilter) {
+        // Map chapter names to topic filters for database queries
+        const chapterTopicMap: Record<string, string[]> = {
+          "Chapter 1: Making of the Constitution": ["Constitution Making", "Constitutional History"],
+          "Chapter 2: Salient Features of the Constitution": ["Constitutional Features", "Federalism"],
+          "Chapter 3: The Preamble": ["Preamble"],
+          "Chapter 4: Fundamental Rights": ["Fundamental Rights"],
+          "Chapter 5: Fundamental Duties": ["Fundamental Duties"],
+          "Chapter 6: Directive Principles of State Policy": ["Directive Principles"],
+          "Chapter 7: Constitutional Amendments": ["Amendment Procedure"],
+          "Chapter 8: Basic Structure of the Constitution": ["Basic Structure"],
+        };
+        
+        const topics = chapterTopicMap[chapterFilter] || [chapterFilter];
+        query = query.in('topic', topics);
+      }
+      
+      const limit = chapterFilter ? 5 : 10; // Fewer questions for chapter-specific tests
+      query = query.limit(limit);
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setQuestions(data || []);
@@ -108,14 +140,14 @@ const PolityTest = () => {
   const handleTestSubmit = async () => {
     setIsTestCompleted(true);
     const score = userAnswers.filter(answer => answer.isCorrect).length;
-    const timeTaken = 1800 - timeLeft;
+    const timeTaken = (chapterFilter ? 900 : 1800) - timeLeft;
 
     try {
       // Note: This will require authentication to work properly
       const { error } = await supabase
         .from('test_attempts')
         .insert({
-          test_name: 'Indian Polity Advanced Test',
+          test_name: getTestTitle(),
           score,
           total_questions: questions.length,
           answers: JSON.stringify(userAnswers),
@@ -239,13 +271,13 @@ const PolityTest = () => {
     return (
       <div className="min-h-screen bg-background p-4">
         <SEOHead 
-          title="Test Results - Indian Polity Advanced Test"
+          title={`Test Results - ${getTestTitle()}`}
           description="View your Indian Polity test results and detailed explanations"
         />
         <div className="max-w-4xl mx-auto">
           <Card className="mb-6">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Test Completed!</CardTitle>
+              <CardTitle className="text-2xl">{chapterFilter ? "Chapter Test Completed!" : "Test Completed!"}</CardTitle>
               <div className={`text-4xl font-bold ${getScoreColor(percentage)}`}>
                 {percentage}%
               </div>
@@ -360,6 +392,12 @@ const PolityTest = () => {
           </div>
 
           <div className="flex gap-4 mt-6">
+            {chapterFilter && (
+              <Button onClick={() => navigate(`/study-materials/polity?chapter=${encodeURIComponent(chapterFilter)}`)} variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Chapter
+              </Button>
+            )}
             <Button onClick={() => navigate('/test-series')} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Tests
@@ -379,8 +417,8 @@ const PolityTest = () => {
   return (
     <div className="min-h-screen bg-background p-4">
       <SEOHead 
-        title="Indian Polity Advanced Test - UPSC Preparation"
-        description="Take the comprehensive Indian Polity Advanced Test with MCQ and True/False questions for UPSC preparation"
+        title={`${getTestTitle()} - UPSC Preparation`}
+        description={`Take the ${chapterFilter ? 'chapter-specific' : 'comprehensive'} Indian Polity test with MCQ and True/False questions for UPSC preparation`}
       />
       
       <div className="max-w-4xl mx-auto">
@@ -388,10 +426,10 @@ const PolityTest = () => {
         <div className="flex items-center justify-between mb-6">
           <Button 
             variant="outline" 
-            onClick={() => navigate('/test-series')}
+            onClick={() => chapterFilter ? navigate(`/study-materials/polity?chapter=${encodeURIComponent(chapterFilter)}`) : navigate('/test-series')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Exit Test
+            {chapterFilter ? "Back to Chapter" : "Exit Test"}
           </Button>
           
           <div className="flex items-center gap-4">

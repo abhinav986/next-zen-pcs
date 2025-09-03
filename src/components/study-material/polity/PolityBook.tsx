@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Star, Lightbulb, Download, Bookmark, Play, CheckCircle, Menu, X, Languages, Table, Info, Target } from "lucide-react";
+import { BookOpen, Star, Lightbulb, Download, Bookmark, Play, CheckCircle, Menu, X, Languages, Table, Info, Target, TestTube } from "lucide-react";
 import jsPDF from "jspdf";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
 import { chapters } from "./constants";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 
 // ==================== ENRICHED UPSC CONTENT (same as before) ====================
 // ... keep the chapters object here ...
@@ -308,19 +308,33 @@ const PolityBook = () => {
                 </div>
                 
                 {isSelected && (
-                  <div className="mt-2 pt-2 border-t border-border/50">
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        markChapterComplete(chapter);
-                      }}
-                      size="sm"
-                      variant="outline"
-                      className="w-full text-xs"
-                      disabled={isCompleted}
-                    >
-                      {isCompleted ? (isHindi ? "✓ पूर्ण" : "✓ Completed") : (isHindi ? "पूर्ण चिह्नित करें" : "Mark Complete")}
-                    </Button>
+                  <div className="mt-2 pt-2 border-t border-border/50 space-y-2">
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markChapterComplete(chapter);
+                        }}
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 text-xs"
+                        disabled={isCompleted}
+                      >
+                        {isCompleted ? (isHindi ? "✓ पूर्ण" : "✓ Completed") : (isHindi ? "पूर्ण चिह्नित करें" : "Mark Complete")}
+                      </Button>
+                      <Button
+                        asChild
+                        size="sm"
+                        variant="secondary"
+                        className="flex-1 text-xs"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Link to={`/polity-test?chapter=${encodeURIComponent(chapter)}`}>
+                          <TestTube className="h-3 w-3 mr-1" />
+                          {isHindi ? "अभ्यास" : "Practice"}
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -350,9 +364,21 @@ const PolityBook = () => {
       }`}>
         <div className="max-w-4xl">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              {isHindi ? getChapterTitleHindi(selectedChapter) : selectedChapter}
-            </h1>
+            <div className="flex items-center justify-between mb-2">
+              <h1 className="text-3xl font-bold text-foreground">
+                {isHindi ? getChapterTitleHindi(selectedChapter) : selectedChapter}
+              </h1>
+              <Button
+                asChild
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Link to={`/polity-test?chapter=${encodeURIComponent(selectedChapter)}`}>
+                  <TestTube className="h-4 w-4" />
+                  {isHindi ? "अध्याय परीक्षा" : "Chapter Test"}
+                </Link>
+              </Button>
+            </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span>{chapters[selectedChapter].length} {isHindi ? "विषय" : "topics"}</span>
               <span>•</span>
