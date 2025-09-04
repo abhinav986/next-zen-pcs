@@ -34,6 +34,7 @@ const translations = {
     'test.correct': 'Correct',
     'test.incorrect': 'Incorrect',
     'test.unanswered': 'Unanswered',
+    'test.start': 'Start Test',
     
     // Navigation
     'nav.signIn': 'Sign In',
@@ -81,6 +82,7 @@ const translations = {
     'test.correct': 'सही',
     'test.incorrect': 'गलत',
     'test.unanswered': 'अनुत्तरित',
+    'test.start': 'परीक्षा शुरू करें',
     
     // Navigation
     'nav.signIn': 'साइन इन करें',

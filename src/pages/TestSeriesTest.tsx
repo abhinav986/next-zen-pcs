@@ -64,6 +64,7 @@ const TestSeriesTest = () => {
   const [showResults, setShowResults] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isStarted, setIsStarted] = useState(false);
 
   useEffect(() => {
     checkAuthentication();
@@ -77,12 +78,11 @@ const TestSeriesTest = () => {
     }
   }, [authChecked, user, testId]);
 
-  useEffect(() => {
-    if (testSeries) {
-      setTimeLeft(testSeries.duration * 60); // Convert minutes to seconds
-      fetchQuestions();
-    }
-  }, [testSeries]);
+useEffect(() => {
+  if (testSeries) {
+    fetchQuestions();
+  }
+}, [testSeries]);
 
   const checkAuthentication = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -100,14 +100,14 @@ const TestSeriesTest = () => {
     return () => subscription.unsubscribe();
   };
 
-  useEffect(() => {
-    if (timeLeft > 0 && !isTestCompleted && !isPaused) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0) {
-      handleTestSubmit();
-    }
-  }, [timeLeft, isTestCompleted, isPaused]);
+useEffect(() => {
+  if (isStarted && timeLeft > 0 && !isTestCompleted && !isPaused) {
+    const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+    return () => clearTimeout(timer);
+  } else if (isStarted && timeLeft === 0 && !isTestCompleted) {
+    handleTestSubmit();
+  }
+}, [isStarted, timeLeft, isTestCompleted, isPaused]);
 
   const fetchTestSeries = async () => {
     try {
@@ -191,35 +191,40 @@ const TestSeriesTest = () => {
     }
   };
 
-  const handlePreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      if (selectedAnswer) {
-        saveCurrentAnswer();
-      }
-      
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-      
-      const savedAnswer = userAnswers.find(answer => answer.questionId === questions[currentQuestionIndex - 1]?.id);
-      setSelectedAnswer(savedAnswer?.answer || "");
+const handleStartTest = () => {
+  const durationMins = (testSeries?.duration && testSeries.duration > 0)
+    ? testSeries.duration
+    : (testSeries?.test_type === 'chapter' ? 15 : 60);
+  setTimeLeft(durationMins * 60);
+  setIsStarted(true);
+};
+
+const handlePreviousQuestion = () => {
+  if (currentQuestionIndex > 0) {
+    if (selectedAnswer) {
+      saveCurrentAnswer();
     }
-  };
+    setCurrentQuestionIndex(currentQuestionIndex - 1);
+    const savedAnswer = userAnswers.find(answer => answer.questionId === questions[currentQuestionIndex - 1]?.id);
+    setSelectedAnswer(savedAnswer?.answer || "");
+  }
+};
 
-  const handleNextQuestion = () => {
-    if (!selectedAnswer) {
-      toast.error(t('test.selectAnswer'));
-      return;
-    }
+const handleNextQuestion = () => {
+  if (!selectedAnswer) {
+    toast.error(t('test.selectAnswer'));
+    return;
+  }
 
-    saveCurrentAnswer();
-    setSelectedAnswer("");
+  saveCurrentAnswer();
+  setSelectedAnswer("");
 
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    } else {
-      handleTestSubmit();
-    }
-  };
-
+  if (currentQuestionIndex < questions.length - 1) {
+    setCurrentQuestionIndex(currentQuestionIndex + 1);
+  } else {
+    handleTestSubmit();
+  }
+};
   const handleTestSubmit = async () => {
     if (selectedAnswer) {
       saveCurrentAnswer();
@@ -452,7 +457,7 @@ const TestSeriesTest = () => {
       />
       
       {/* Pause Overlay */}
-      {isPaused && (
+      {isPaused && isStarted && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
           <Card className="w-full max-w-md">
             <CardContent className="pt-6 text-center">
@@ -493,7 +498,7 @@ const TestSeriesTest = () => {
               <div className="flex items-center gap-4">
                 <LanguageToggle />
                 {/* Pause/Resume Button for Chapter Tests */}
-                {testSeries.test_type === 'chapter' && (
+                {isStarted && testSeries.test_type === 'chapter' && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -514,15 +519,17 @@ const TestSeriesTest = () => {
                   </Button>
                 )}
                 
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span className="font-mono">{formatTime(timeLeft)}</span>
-                  {isPaused && (
-                    <span className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded">
-                      PAUSED
-                    </span>
-                  )}
-                </div>
+                {isStarted && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span className="font-mono">{formatTime(timeLeft)}</span>
+                    {isPaused && (
+                      <span className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded">
+                        PAUSED
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </CardHeader>
