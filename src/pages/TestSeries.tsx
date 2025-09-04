@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Timer, Users, Trophy, BookOpen, Target, Clock, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { upscSubjects } from "@/data/upscSubjects";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TestSeries {
   id: string;
@@ -20,12 +21,64 @@ interface TestSeries {
   maxScore: number;
   attempted: boolean;
   score?: number;
+  // Supabase fields
+  total_questions?: number;
+  max_score?: number;
+  subject_id?: string;
+  test_type?: string;
+  chapter_name?: string;
+  is_active?: boolean;
 }
 
 const TestSeries = () => {
   const [filter, setFilter] = useState<'all' | 'attempted' | 'pending'>('all');
+  const [realTestSeries, setRealTestSeries] = useState<TestSeries[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const testSeries: TestSeries[] = [
+  useEffect(() => {
+    fetchTestSeries();
+  }, []);
+
+  const fetchTestSeries = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('test_series')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform Supabase data to match our interface
+      const transformedData: TestSeries[] = (data || []).map(test => {
+        const validDifficulty = ['Easy', 'Medium', 'Hard'].includes(test.difficulty) 
+          ? test.difficulty as 'Easy' | 'Medium' | 'Hard'
+          : 'Medium' as 'Easy' | 'Medium' | 'Hard';
+        
+        return {
+          id: test.id,
+          title: test.title,
+          description: test.description || '',
+          duration: test.duration,
+          questions: test.total_questions,
+          participants: Math.floor(Math.random() * 1000) + 100, // Mock participants for now
+          difficulty: validDifficulty,
+          subject: test.subject_id ? upscSubjects.find(s => s.id === test.subject_id)?.name || 'General Studies' : 'General Studies',
+          maxScore: test.max_score,
+          attempted: false, // Would need to check user's test attempts
+        };
+      });
+
+      setRealTestSeries(transformedData);
+    } catch (error) {
+      console.error('Error fetching test series:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mock data as fallback
+  const mockTestSeries: TestSeries[] = [
     {
       id: 'prelims-1',
       title: 'UPSC Prelims Mock Test 1',
@@ -102,7 +155,10 @@ const TestSeries = () => {
     }
   ];
 
-  const filteredTests = testSeries.filter(test => {
+  // Combine real and mock data
+  const allTestSeries = [...realTestSeries, ...mockTestSeries];
+
+  const filteredTests = allTestSeries.filter(test => {
     if (filter === 'attempted') return test.attempted;
     if (filter === 'pending') return !test.attempted;
     return true;

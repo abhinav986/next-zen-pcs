@@ -23,18 +23,23 @@ interface ChapterTest {
   maxScore: number;
 }
 
-interface WeakSection {
-  topic: string;
-  accuracy: number;
-  questionsAttempted: number;
-  averageTime: number;
-  recommendation: string;
+interface SubjectTestSeries {
+  id: string;
+  title: string;
+  description: string;
+  duration: number;
+  total_questions: number;
+  max_score: number;
+  difficulty: string;
+  test_type: string;
+  chapter_name?: string;
 }
 
 const SubjectTest = () => {
   const { subjectId } = useParams<{ subjectId: string }>();
   const subject = subjectId ? getSubjectById(subjectId) : null;
   const [weakSections, setWeakSections] = useState<WeakSectionAnalysis[]>([]);
+  const [subjectTests, setSubjectTests] = useState<SubjectTestSeries[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
 
@@ -47,25 +52,44 @@ const SubjectTest = () => {
   }, []);
 
   useEffect(() => {
-    const fetchWeakSections = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const analysis = await calculateWeakSections(user.id, subjectId);
-        setWeakSections(analysis);
-      } catch (error) {
-        console.error('Error fetching weak sections:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+    fetchSubjectTests();
     fetchWeakSections();
   }, [user, subjectId]);
+
+  const fetchSubjectTests = async () => {
+    if (!subjectId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('test_series')
+        .select('*')
+        .eq('subject_id', subjectId)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setSubjectTests(data || []);
+    } catch (error) {
+      console.error('Error fetching subject tests:', error);
+    }
+  };
+
+  const fetchWeakSections = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const analysis = await calculateWeakSections(user.id, subjectId);
+      setWeakSections(analysis);
+    } catch (error) {
+      console.error('Error fetching weak sections:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!subject) {
     return (
@@ -202,11 +226,54 @@ const SubjectTest = () => {
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-semibold text-foreground">Chapter-wise Tests</h2>
                   <Badge variant="secondary">
-                    {chapterTests.filter(test => test.completed).length} / {chapterTests.length} Completed
+                    {subjectTests.filter(test => test.test_type === 'chapter').length} Available
                   </Badge>
                 </div>
                 
+                {/* Real subject tests from admin */}
+                {subjectTests.filter(test => test.test_type === 'chapter').length > 0 && (
+                  <div className="grid gap-4 mb-8">
+                    <h3 className="text-lg font-medium text-foreground">Available Chapter Tests</h3>
+                    {subjectTests.filter(test => test.test_type === 'chapter').map((test) => (
+                      <Card key={test.id} className="p-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-lg font-semibold text-foreground">{test.title}</h3>
+                              <Badge className={getDifficultyColor(test.difficulty)}>
+                                {test.difficulty}
+                              </Badge>
+                            </div>
+                            
+                            <p className="text-muted-foreground mb-4">{test.description}</p>
+                            
+                            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Target className="h-4 w-4" />
+                                {test.total_questions} Questions
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-4 w-4" />
+                                {test.duration} min
+                              </div>
+                              {test.chapter_name && (
+                                <Badge variant="outline">{test.chapter_name}</Badge>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <Button>Start Test</Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {/* Mock chapter tests */}
                 <div className="grid gap-4">
+                  <h3 className="text-lg font-medium text-foreground">Practice Chapter Tests</h3>
                   {chapterTests.map((test) => (
                     <Card key={test.id} className="p-6">
                       <div className="flex items-start justify-between">
@@ -268,6 +335,46 @@ const SubjectTest = () => {
               <div className="grid gap-6">
                 <h2 className="text-2xl font-semibold text-foreground">Full Subject Test</h2>
                 
+                {/* Real full tests from admin */}
+                {subjectTests.filter(test => test.test_type === 'full').length > 0 && (
+                  <div className="grid gap-4 mb-8">
+                    <h3 className="text-lg font-medium text-foreground">Available Full Tests</h3>
+                    {subjectTests.filter(test => test.test_type === 'full').map((test) => (
+                      <Card key={test.id} className="p-8 text-center">
+                        <div className="max-w-md mx-auto">
+                          <div className="text-4xl mb-4">{subject?.icon}</div>
+                          <h3 className="text-xl font-semibold text-foreground mb-2">
+                            {test.title}
+                          </h3>
+                          <p className="text-muted-foreground mb-6">
+                            {test.description}
+                          </p>
+                          
+                          <div className="grid grid-cols-3 gap-4 mb-6 text-sm">
+                            <div className="text-center">
+                              <div className="font-semibold text-foreground">{test.total_questions}</div>
+                              <div className="text-muted-foreground">Questions</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="font-semibold text-foreground">{test.duration}</div>
+                              <div className="text-muted-foreground">Minutes</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="font-semibold text-foreground">{test.max_score}</div>
+                              <div className="text-muted-foreground">Max Score</div>
+                            </div>
+                          </div>
+                          
+                          <Button size="lg" className="w-full mb-4">
+                            Start {test.title}
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {/* Default full test */}
                 <Card className="p-8 text-center">
                   <div className="max-w-md mx-auto">
                     <div className="text-4xl mb-4">{subject.icon}</div>
