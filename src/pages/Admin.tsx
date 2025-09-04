@@ -812,6 +812,17 @@ const Admin = () => {
                               </Select>
                             </div>
                           </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="topic">Topic (Optional)</Label>
+                              <Input
+                                id="topic"
+                                value={newQuestion.topic || ""}
+                                onChange={(e) => setNewQuestion({...newQuestion, topic: e.target.value})}
+                                placeholder="Enter topic"
+                              />
+                            </div>
+                          </div>
                           <div>
                             <Label htmlFor="explanation">Explanation (Optional)</Label>
                             <Textarea
