@@ -296,7 +296,8 @@ const handleNextQuestion = () => {
 
     try {
       if (user && testSeries) {
-        const { error } = await supabase
+        // Insert test attempt first
+        const { data: attemptData, error: attemptError } = await supabase
           .from('test_attempts')
           .insert({
             user_id: user.id,
@@ -305,20 +306,94 @@ const handleNextQuestion = () => {
             total_questions: questions.length,
             answers: JSON.stringify(finalAnswers),
             time_taken: timeTaken
-          });
+          })
+          .select('id')
+          .single();
 
-        if (error) {
-          console.error('Error saving test attempt:', error);
-          toast.error('Failed to save test results');
-        } else {
-          toast.success('Test results saved successfully!');
+        if (attemptError) {
+          throw attemptError;
         }
+
+        // Store section-wise performance and weak sections
+        if (attemptData) {
+          await storeSectionPerformance(attemptData.id, finalAnswers);
+          await storeWeakSections(attemptData.id, finalAnswers);
+        }
+
+        toast.success('Test results saved successfully!');
       }
     } catch (error) {
       console.error('Error saving test attempt:', error);
+      toast.error('Failed to save test results');
     }
 
     setTestCompleted(true);
+  };
+
+  const storeSectionPerformance = async (testAttemptId: string, answers: UserAnswer[]) => {
+    if (!user || !testSeries) return;
+
+    const sectionStats = getSectionWiseAnalysis();
+    
+    const performanceData = Object.entries(sectionStats).map(([topic, stats]) => ({
+      user_id: user.id,
+      test_attempt_id: testAttemptId,
+      test_name: testSeries.title,
+      section_name: topic,
+      total_questions: stats.total,
+      correct_answers: stats.correct,
+      accuracy_percentage: stats.percentage
+    }));
+
+    try {
+      const { error } = await supabase
+        .from('section_performance')
+        .insert(performanceData);
+
+      if (error) {
+        console.error('Error storing section performance:', error);
+      }
+    } catch (error) {
+      console.error('Error storing section performance:', error);
+    }
+  };
+
+  const storeWeakSections = async (testAttemptId: string, answers: UserAnswer[]) => {
+    if (!user || !testSeries) return;
+
+    const weakSections = getWeakSections();
+    const sectionStats = getSectionWiseAnalysis();
+    
+    const weakSectionData = weakSections.map(topic => ({
+      user_id: user.id,
+      test_attempt_id: testAttemptId,
+      test_name: testSeries.title,
+      section_name: topic,
+      accuracy_percentage: sectionStats[topic].percentage,
+      recommendation: generateRecommendation(topic, sectionStats[topic]),
+      is_weak: true
+    }));
+
+    try {
+      const { error } = await supabase
+        .from('weak_sections')
+        .insert(weakSectionData);
+
+      if (error) {
+        console.error('Error storing weak sections:', error);
+      }
+    } catch (error) {
+      console.error('Error storing weak sections:', error);
+    }
+  };
+
+  const generateRecommendation = (topic: string, stats: any) => {
+    if (stats.percentage < 40) {
+      return `Focus heavily on ${topic}. Consider reviewing basic concepts and practicing more questions in this area.`;
+    } else if (stats.percentage < 60) {
+      return `Improve your understanding of ${topic}. Practice additional questions and review explanations.`;
+    }
+    return `Continue practicing ${topic} to maintain and improve your performance.`;
   };
 
   const getScorePercentage = () => {

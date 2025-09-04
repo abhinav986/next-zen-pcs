@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Clock, Users, Target, TrendingDown, Loader2 } from "lucide-react";
+import { ArrowLeft, Clock, Users, Target, TrendingDown, Loader2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,8 @@ interface SubjectTestSeries {
   difficulty: string;
   test_type: string;
   chapter_name?: string;
+  attempted?: boolean;
+  score?: number;
 }
 
 const SubjectTest = () => {
@@ -42,6 +44,7 @@ const SubjectTest = () => {
   const [subjectTests, setSubjectTests] = useState<SubjectTestSeries[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [userAttempts, setUserAttempts] = useState<Record<string, any>>({});
 
   useEffect(() => {
     const getUser = async () => {
@@ -52,9 +55,42 @@ const SubjectTest = () => {
   }, []);
 
   useEffect(() => {
-    fetchSubjectTests();
-    fetchWeakSections();
+    if (user) {
+      fetchSubjectTests();
+      fetchUserAttempts();
+      fetchWeakSections();
+    } else {
+      fetchSubjectTests();
+      fetchWeakSections();
+    }
   }, [user, subjectId]);
+
+  const fetchUserAttempts = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('test_attempts')
+        .select('test_name, score, total_questions, completed_at')
+        .eq('user_id', user.id)
+        .order('completed_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Group attempts by test name and get the best score
+      const attemptsMap: Record<string, any> = {};
+      (data || []).forEach(attempt => {
+        if (!attemptsMap[attempt.test_name] || 
+            attempt.score > attemptsMap[attempt.test_name].score) {
+          attemptsMap[attempt.test_name] = attempt;
+        }
+      });
+
+      setUserAttempts(attemptsMap);
+    } catch (error) {
+      console.error('Error fetching user attempts:', error);
+    }
+  };
 
   const fetchSubjectTests = async () => {
     if (!subjectId) return;
@@ -68,7 +104,18 @@ const SubjectTest = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSubjectTests(data || []);
+      
+      // Add completion status to tests
+      const testsWithCompletion = (data || []).map(test => {
+        const userAttempt = userAttempts[test.title];
+        return {
+          ...test,
+          attempted: !!userAttempt,
+          score: userAttempt ? userAttempt.score : undefined
+        };
+      });
+      
+      setSubjectTests(testsWithCompletion);
     } catch (error) {
       console.error('Error fetching subject tests:', error);
     }
@@ -237,13 +284,21 @@ const SubjectTest = () => {
                      {subjectTests.filter(test => test.test_type === 'chapter').map((test) => (
                        <Card key={test.id} className="p-4 sm:p-6">
                          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-                           <div className="flex-1">
-                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                               <h3 className="text-base sm:text-lg font-semibold text-foreground">{test.title}</h3>
-                               <Badge className={getDifficultyColor(test.difficulty)}>
-                                 {test.difficulty}
-                               </Badge>
-                             </div>
+                            <div className="flex-1">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                                <h3 className="text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
+                                  {test.attempted && <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />}
+                                  {test.title}
+                                </h3>
+                                <div className="flex gap-2">
+                                  <Badge className={getDifficultyColor(test.difficulty)}>
+                                    {test.difficulty}
+                                  </Badge>
+                                  {test.attempted && (
+                                    <Badge variant="default">Completed</Badge>
+                                  )}
+                                </div>
+                              </div>
                              
                              <p className="text-muted-foreground mb-4 text-sm">{test.description}</p>
                              

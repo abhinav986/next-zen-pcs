@@ -80,6 +80,56 @@ export type Database = {
         }
         Relationships: []
       }
+      section_performance: {
+        Row: {
+          accuracy_percentage: number
+          average_time_seconds: number | null
+          correct_answers: number
+          created_at: string
+          id: string
+          section_name: string
+          test_attempt_id: string | null
+          test_name: string
+          total_questions: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accuracy_percentage?: number
+          average_time_seconds?: number | null
+          correct_answers?: number
+          created_at?: string
+          id?: string
+          section_name: string
+          test_attempt_id?: string | null
+          test_name: string
+          total_questions?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accuracy_percentage?: number
+          average_time_seconds?: number | null
+          correct_answers?: number
+          created_at?: string
+          id?: string
+          section_name?: string
+          test_attempt_id?: string | null
+          test_name?: string
+          total_questions?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "section_performance_test_attempt_id_fkey"
+            columns: ["test_attempt_id"]
+            isOneToOne: false
+            referencedRelation: "test_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       test_attempts: {
         Row: {
           answers: Json
@@ -207,6 +257,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      weak_sections: {
+        Row: {
+          accuracy_percentage: number
+          created_at: string
+          id: string
+          is_weak: boolean
+          recommendation: string | null
+          section_name: string
+          test_attempt_id: string | null
+          test_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accuracy_percentage?: number
+          created_at?: string
+          id?: string
+          is_weak?: boolean
+          recommendation?: string | null
+          section_name: string
+          test_attempt_id?: string | null
+          test_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accuracy_percentage?: number
+          created_at?: string
+          id?: string
+          is_weak?: boolean
+          recommendation?: string | null
+          section_name?: string
+          test_attempt_id?: string | null
+          test_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weak_sections_test_attempt_id_fkey"
+            columns: ["test_attempt_id"]
+            isOneToOne: false
+            referencedRelation: "test_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
