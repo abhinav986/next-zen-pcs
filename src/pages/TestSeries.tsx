@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Timer, Users, Trophy, BookOpen, Target, Clock, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
+import { upscSubjects } from "@/data/upscSubjects";
+import { Link } from "react-router-dom";
 
 interface TestSeries {
   id: string;
@@ -176,7 +178,45 @@ const TestSeries = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Test List */}
             <div className="lg:col-span-2 space-y-6">
-              {filteredTests.map((test) => (
+              {/* Subject-wise Tests */}
+              <div className="mb-8">
+                <h2 className="text-2xl font-semibold text-foreground mb-4">Subject-wise Tests</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {upscSubjects.map((subject) => (
+                    <Link key={subject.id} to={`/test-series/${subject.id}`}>
+                      <Card className="hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl">{subject.icon}</span>
+                            <div>
+                              <CardTitle className="text-lg">{subject.name}</CardTitle>
+                              <CardDescription className="text-sm">
+                                {subject.totalTopics} topics • {subject.difficulty}
+                              </CardDescription>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <p className="text-sm text-muted-foreground mb-3">{subject.description}</p>
+                          <div className="flex items-center justify-between">
+                            <Badge variant="secondary" className={subject.color}>
+                              {subject.difficulty}
+                            </Badge>
+                            <Button variant="ghost" size="sm">
+                              View Tests →
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* General Mock Tests */}
+              <div>
+                <h2 className="text-2xl font-semibold text-foreground mb-4">General Mock Tests</h2>
+                {filteredTests.map((test) => (
                 <Card key={test.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -253,7 +293,8 @@ const TestSeries = () => {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                ))}
+              </div>
             </div>
 
             {/* Sidebar */}
