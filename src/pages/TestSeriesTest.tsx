@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Clock, CheckCircle, XCircle, ArrowLeft, BookOpen, SkipForward, SkipBack, Pause, Play } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Clock, CheckCircle, XCircle, ArrowLeft, BookOpen, SkipForward, SkipBack, Pause, Play, TrendingUp, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
@@ -45,6 +46,16 @@ interface UserAnswer {
   topic: string;
 }
 
+interface TestAttempt {
+  id: string;
+  test_name: string;
+  score: number;
+  total_questions: number;
+  completed_at: string;
+  time_taken: number;
+  answers: any;
+}
+
 const TestSeriesTest = () => {
   const navigate = useNavigate();
   const { testId } = useParams<{ testId: string }>();
@@ -65,6 +76,8 @@ const TestSeriesTest = () => {
   const [authChecked, setAuthChecked] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isStarted, setIsStarted] = useState(false);
+  const [previousAttempts, setPreviousAttempts] = useState<TestAttempt[]>([]);
+  const [showingPreviousResults, setShowingPreviousResults] = useState(false);
 
   useEffect(() => {
     checkAuthentication();
@@ -73,6 +86,7 @@ const TestSeriesTest = () => {
   useEffect(() => {
     if (authChecked && user && testId) {
       fetchTestSeries();
+      fetchPreviousAttempts();
     } else if (authChecked && !user) {
       setIsLoading(false);
     }
@@ -81,6 +95,7 @@ const TestSeriesTest = () => {
 useEffect(() => {
   if (testSeries) {
     fetchQuestions();
+    fetchPreviousAttempts();
   }
 }, [testSeries]);
 
@@ -143,6 +158,38 @@ useEffect(() => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fetchPreviousAttempts = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('test_attempts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('test_name', testSeries?.title || '')
+        .order('completed_at', { ascending: false });
+
+      if (error) throw error;
+      setPreviousAttempts(data || []);
+    } catch (error) {
+      console.error('Error fetching previous attempts:', error);
+    }
+  };
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getPercentageForAttempt = (attempt: TestAttempt) => {
+    return Math.round((attempt.score / attempt.total_questions) * 100);
   };
 
   const formatTime = (seconds: number) => {
@@ -372,7 +419,7 @@ const handleNextQuestion = () => {
     );
   }
 
-  if (showResults) {
+  if (showResults || showingPreviousResults) {
     const percentage = getScorePercentage();
     const sectionStats = getSectionWiseAnalysis();
     const weakSections = getWeakSections();
@@ -384,17 +431,27 @@ const handleNextQuestion = () => {
           description="View your test results and detailed explanations"
         />
         <div className="max-w-4xl mx-auto">
-          <Card className="mb-6">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl">{t('test.completed')}</CardTitle>
-              <div className={`text-4xl font-bold ${getScoreColor(percentage)}`}>
-                {percentage}%
-              </div>
-              <p className="text-muted-foreground">
-                {t('test.score')} {userAnswers.filter(a => a.isCorrect).length} {t('test.outOf')} {questions.length} {t('test.questionsCorrectly')}
-              </p>
-            </CardHeader>
-          </Card>
+          <Tabs defaultValue="current" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="current">Current Result</TabsTrigger>
+              <TabsTrigger value="progress">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Progress
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="current" className="space-y-6">
+              <Card>
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl">{t('test.completed')}</CardTitle>
+                  <div className={`text-4xl font-bold ${getScoreColor(percentage)}`}>
+                    {percentage}%
+                  </div>
+                  <p className="text-muted-foreground">
+                    {t('test.score')} {userAnswers.filter(a => a.isCorrect).length} {t('test.outOf')} {questions.length} {t('test.questionsCorrectly')}
+                  </p>
+                </CardHeader>
+              </Card>
 
           {/* Section-wise Analysis */}
           {Object.keys(sectionStats).length > 1 && (
@@ -532,6 +589,213 @@ const handleNextQuestion = () => {
               <ArrowLeft className="h-4 w-4 mr-2" />
               {t('test.backToTests')}
             </Button>
+          </div>
+          </TabsContent>
+
+          <TabsContent value="progress" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5" />
+                  Test History
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {previousAttempts.length > 0 ? (
+                  <div className="space-y-4">
+                    {previousAttempts.map((attempt, index) => (
+                      <div key={attempt.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium">Attempt {previousAttempts.length - index}</span>
+                            <span className={`text-sm font-bold ${getScoreColor(getPercentageForAttempt(attempt))}`}>
+                              {getPercentageForAttempt(attempt)}%
+                            </span>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {formatDateTime(attempt.completed_at)} • {attempt.score}/{attempt.total_questions} correct
+                          </div>
+                          {attempt.time_taken && (
+                            <div className="text-xs text-muted-foreground">
+                              Time: {formatTime(attempt.time_taken)}
+                            </div>
+                          )}
+                        </div>
+                        <Progress value={getPercentageForAttempt(attempt)} className="w-20 h-2" />
+                      </div>
+                    ))}
+                    
+                    <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Progress Summary</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <div className="text-muted-foreground">Total Attempts</div>
+                          <div className="font-bold">{previousAttempts.length}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Best Score</div>
+                          <div className="font-bold text-green-600">
+                            {Math.max(...previousAttempts.map(getPercentageForAttempt))}%
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Average Score</div>
+                          <div className="font-bold">
+                            {Math.round(previousAttempts.reduce((sum, attempt) => sum + getPercentageForAttempt(attempt), 0) / previousAttempts.length)}%
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Latest Score</div>
+                          <div className={`font-bold ${getScoreColor(getPercentageForAttempt(previousAttempts[0]))}`}>
+                            {getPercentageForAttempt(previousAttempts[0])}%
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-muted-foreground">No previous attempts found</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    );
+  }
+
+  // Start screen when test is not started yet
+  if (!isStarted) {
+    return (
+      <div className="min-h-screen bg-background p-4">
+        <SEOHead 
+          title={`${testSeries.title} - Test`}
+          description={`Take the ${testSeries.title} test`}
+        />
+        <div className="max-w-4xl mx-auto">
+          <Card className="mb-6">
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div>
+                  <CardTitle className="text-2xl">{testSeries.title}</CardTitle>
+                  <p className="text-muted-foreground">{testSeries.description}</p>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* Test Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Test Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <div className="text-muted-foreground">Questions</div>
+                    <div className="font-bold">{questions.length}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Duration</div>
+                    <div className="font-bold">
+                      {testSeries.duration > 0 ? `${testSeries.duration} min` : 
+                       testSeries.test_type === 'chapter' ? '15 min' : '60 min'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Difficulty</div>
+                    <div className="font-bold">{testSeries.difficulty}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Type</div>
+                    <div className="font-bold capitalize">{testSeries.test_type}</div>
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={handleStartTest} 
+                  className="w-full mt-6"
+                  size="lg"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  {previousAttempts.length > 0 ? 'Retake Test' : t('test.startTest')}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Previous Attempts */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  Your Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {previousAttempts.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Summary</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <div className="text-muted-foreground">Attempts</div>
+                          <div className="font-bold">{previousAttempts.length}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Best Score</div>
+                          <div className="font-bold text-green-600">
+                            {Math.max(...previousAttempts.map(getPercentageForAttempt))}%
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h5 className="font-medium text-sm">Recent Attempts</h5>
+                      {previousAttempts.slice(0, 3).map((attempt, index) => (
+                        <div key={attempt.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <div className="font-medium text-sm">
+                              {formatDateTime(attempt.completed_at)}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {attempt.score}/{attempt.total_questions} correct
+                            </div>
+                          </div>
+                          <div className={`font-bold ${getScoreColor(getPercentageForAttempt(attempt))}`}>
+                            {getPercentageForAttempt(attempt)}%
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {previousAttempts.length > 3 && (
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => setShowingPreviousResults(true)}
+                      >
+                        View Full History
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-muted-foreground">No previous attempts</p>
+                    <p className="text-sm text-muted-foreground">Take your first test to track progress</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
