@@ -284,6 +284,36 @@ const handleNextQuestion = () => {
     return "text-red-600";
   };
 
+  const getSectionWiseAnalysis = () => {
+    const sectionStats: Record<string, { correct: number; total: number; percentage: number }> = {};
+    
+    userAnswers.forEach(answer => {
+      if (!sectionStats[answer.topic]) {
+        sectionStats[answer.topic] = { correct: 0, total: 0, percentage: 0 };
+      }
+      sectionStats[answer.topic].total++;
+      if (answer.isCorrect) {
+        sectionStats[answer.topic].correct++;
+      }
+    });
+
+    Object.keys(sectionStats).forEach(topic => {
+      sectionStats[topic].percentage = Math.round(
+        (sectionStats[topic].correct / sectionStats[topic].total) * 100
+      );
+    });
+
+    return sectionStats;
+  };
+
+  const getWeakSections = () => {
+    const sectionStats = getSectionWiseAnalysis();
+    return Object.entries(sectionStats)
+      .filter(([_, stats]) => stats.percentage < 60)
+      .sort((a, b) => a[1].percentage - b[1].percentage)
+      .map(([topic, _]) => topic);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -344,6 +374,8 @@ const handleNextQuestion = () => {
 
   if (showResults) {
     const percentage = getScorePercentage();
+    const sectionStats = getSectionWiseAnalysis();
+    const weakSections = getWeakSections();
     
     return (
       <div className="min-h-screen bg-background p-4">
@@ -363,6 +395,66 @@ const handleNextQuestion = () => {
               </p>
             </CardHeader>
           </Card>
+
+          {/* Section-wise Analysis */}
+          {Object.keys(sectionStats).length > 1 && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-xl">Section-wise Performance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {Object.entries(sectionStats).map(([topic, stats]) => (
+                    <div key={topic} className="p-4 border rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-medium text-sm">{topic}</h3>
+                        <span className={`text-sm font-bold ${getScoreColor(stats.percentage)}`}>
+                          {stats.percentage}%
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mb-2">
+                        {stats.correct}/{stats.total} questions correct
+                      </div>
+                      <Progress value={stats.percentage} className="h-2" />
+                    </div>
+                  ))}
+                </div>
+                
+                {weakSections.length > 0 && (
+                  <div className="mt-6 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
+                      Areas for Improvement
+                    </h4>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {weakSections.map((topic) => (
+                        <span 
+                          key={topic}
+                          className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 text-xs rounded"
+                        >
+                          {topic} ({sectionStats[topic].percentage}%)
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-xs text-red-600 dark:text-red-300 mb-3">
+                      Focus on these topics for better performance
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {weakSections.map((topic) => (
+                        <Link
+                          key={topic}
+                          to="/study-materials"
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                        >
+                          <BookOpen className="w-3 h-3" />
+                          Study {topic}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           <div className="space-y-4">
             {questions.map((question, index) => {
