@@ -374,9 +374,9 @@ const TestSeries = () => {
                     {test.attempted && test.score && (
                       <div className="mb-4 p-3 bg-secondary/50 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium">Your Score</span>
+                          <span className="text-sm font-medium">Score: {test.score}/{test.maxScore}</span>
                           <span className="text-sm font-bold">
-                            {test.score}/{test.maxScore} ({Math.round((test.score / test.maxScore) * 100)}%)
+                            ({Math.round((test.score / test.maxScore) * 100)}%)
                           </span>
                         </div>
                         <Progress value={(test.score / test.maxScore) * 100} className="h-2" />
