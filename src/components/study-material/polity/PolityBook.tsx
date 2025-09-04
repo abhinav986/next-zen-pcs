@@ -156,51 +156,71 @@ const PolityBook = () => {
         />
       )}
 
-      {/* Mobile Menu Button */}
+      {/* Mobile Floating Action Buttons */}
       {isMobile && (
-        <Button
-          onClick={toggleSidebar}
-          className="fixed top-4 left-4 z-50 rounded-full h-10 w-10 shadow-lg bg-card"
-          size="icon"
-          variant="outline"
-        >
-          {showSidebar ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-        </Button>
+        <div className="fixed bottom-4 left-4 right-4 z-50 flex justify-between items-end">
+          {/* Menu Button */}
+          <Button
+            onClick={toggleSidebar}
+            className="rounded-full h-14 w-14 shadow-xl bg-primary text-primary-foreground hover:scale-110 transition-all duration-300"
+            size="icon"
+          >
+            {showSidebar ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </Button>
+
+          {/* Action Buttons Stack */}
+          <div className="flex flex-col gap-3">
+            {/* Language Toggle */}
+            <Button
+              onClick={() => setIsHindi(!isHindi)}
+              className="rounded-full h-12 w-12 shadow-lg bg-card hover:bg-accent hover:scale-105 transition-all duration-300"
+              size="icon"
+              variant="outline"
+            >
+              <Languages className="h-5 w-5" />
+            </Button>
+            
+            {/* Bookmarks Button */}
+            <Button
+              onClick={() => setShowBookmarks(!showBookmarks)}
+              className="rounded-full h-14 w-14 shadow-xl hover:scale-110 transition-all duration-300"
+              size="icon"
+              variant={showBookmarks ? "default" : "secondary"}
+            >
+              <Bookmark className="h-6 w-6" />
+            </Button>
+          </div>
+        </div>
       )}
 
-      {/* Language Toggle Button */}
-      <Button
-        onClick={() => setIsHindi(!isHindi)}
-        className={`fixed z-50 rounded-full shadow-lg bg-card ${
-          isMobile 
-            ? "top-4 right-4 h-10 w-10" 
-            : "top-5 right-20 h-12 w-12"
-        }`}
-        size="icon"
-        variant="outline"
-      >
-        <Languages className={`${isMobile ? "h-4 w-4" : "h-5 w-5"}`} />
-      </Button>
+      {/* Desktop Floating Buttons */}
+      {!isMobile && (
+        <>
+          <Button
+            onClick={() => setIsHindi(!isHindi)}
+            className="fixed top-5 right-20 z-50 rounded-full h-12 w-12 shadow-lg bg-card"
+            size="icon"
+            variant="outline"
+          >
+            <Languages className="h-5 w-5" />
+          </Button>
 
-      {/* Floating Bookmarks Button - Bottom positioned on mobile */}
-      <Button
-        onClick={() => setShowBookmarks(!showBookmarks)}
-        className={`fixed z-50 rounded-full shadow-lg bg-card ${
-          isMobile 
-            ? "bottom-6 right-4 h-12 w-12" 
-            : "top-5 right-6 h-12 w-12"
-        }`}
-        size="icon"
-        variant={showBookmarks ? "default" : "outline"}
-      >
-        <Bookmark className="h-5 w-5" />
-      </Button>
+          <Button
+            onClick={() => setShowBookmarks(!showBookmarks)}
+            className="fixed top-5 right-6 z-50 rounded-full h-12 w-12 shadow-lg bg-card"
+            size="icon"
+            variant={showBookmarks ? "default" : "outline"}
+          >
+            <Bookmark className="h-5 w-5" />
+          </Button>
+        </>
+      )}
 
       {/* Bookmarks Panel */}
       {showBookmarks && (
         <div className={`fixed bg-card border border-border rounded-lg shadow-2xl z-40 overflow-hidden ${
           isMobile 
-            ? "bottom-20 left-4 right-4 max-h-[calc(100vh-12rem)]" 
+            ? "bottom-32 left-4 right-4 max-h-[calc(100vh-18rem)]" 
             : "top-20 right-6 w-80 max-h-96"
         }`}>
           <div className="p-4 border-b border-border bg-primary/5">
@@ -251,7 +271,7 @@ const PolityBook = () => {
       <div className={`bg-gradient-to-b from-card to-muted/20 border-r border-border overflow-y-auto transition-all duration-300 ${
         isMobile 
           ? showSidebar 
-            ? "fixed inset-y-0 left-0 w-80 z-30" 
+            ? "fixed inset-y-0 left-0 w-[90vw] max-w-sm z-30 rounded-r-xl" 
             : "hidden"
           : "w-80"
       }`}>
@@ -360,18 +380,18 @@ const PolityBook = () => {
 
       {/* Main Content */}
       <div className={`flex-1 overflow-y-auto bg-background ${
-        isMobile ? "p-4 pt-16" : "p-6"
+        isMobile ? "p-4 pt-4 pb-24" : "p-6"
       }`}>
         <div className="max-w-4xl">
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <h1 className="text-3xl font-bold text-foreground">
+            <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center justify-between'} mb-2`}>
+              <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-foreground leading-tight`}>
                 {isHindi ? getChapterTitleHindi(selectedChapter) : selectedChapter}
               </h1>
               <Button
                 asChild
-                size="sm"
-                className="flex items-center gap-2"
+                size={isMobile ? "default" : "sm"}
+                className={`flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}
               >
                 <Link to={`/polity-test?chapter=${encodeURIComponent(selectedChapter)}`}>
                   <TestTube className="h-4 w-4" />
@@ -386,13 +406,15 @@ const PolityBook = () => {
             </div>
           </div>
           {chapters[selectedChapter].map((topic, idx) => (
-            <Card key={idx} className="mb-8 shadow-sm border-border hover:shadow-lg transition-all duration-200 group">
-              <CardContent className="p-6">
-                <h2 className="text-xl font-bold flex items-center gap-3 text-foreground mb-4 group-hover:text-primary transition-colors">
-                  <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <BookOpen className="w-4 h-4 text-primary" />
+            <Card key={idx} className={`mb-6 shadow-sm border-border hover:shadow-lg transition-all duration-200 group ${isMobile ? 'rounded-xl' : ''}`}>
+              <CardContent className={isMobile ? "p-4" : "p-6"}>
+                <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold flex items-center gap-3 text-foreground mb-4 group-hover:text-primary transition-colors leading-tight`}>
+                  <div className={`flex-shrink-0 ${isMobile ? 'w-6 h-6' : 'w-8 h-8'} bg-primary/10 rounded-lg flex items-center justify-center`}>
+                    <BookOpen className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-primary`} />
                   </div>
-                  {isHindi ? (topic.headingHindi || topic.heading) : topic.heading}
+                  <span className="flex-1">
+                    {isHindi ? (topic.headingHindi || topic.heading) : topic.heading}
+                  </span>
                 </h2>
                 {topic?.image && (
                   <div className="my-4">
