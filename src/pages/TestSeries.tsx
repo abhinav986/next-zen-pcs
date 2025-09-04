@@ -51,6 +51,18 @@ const TestSeries = () => {
     }
   }, [user]);
 
+
+  // Update completion flags when user attempts arrive
+  useEffect(() => {
+    if (!realTestSeries.length) return;
+    setRealTestSeries(prev =>
+      prev.map(test => {
+        const attempt = userAttempts[test.title];
+        return { ...test, attempted: !!attempt, score: attempt?.score };
+      })
+    );
+  }, [userAttempts]);
+
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     setUser(session?.user ?? null);
