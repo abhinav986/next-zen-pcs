@@ -263,7 +263,9 @@ const SubjectTest = () => {
                           </div>
                           
                           <div className="flex gap-2">
-                            <Button>Start Test</Button>
+                            <Link to={`/test/${test.id}`}>
+                              <Button>Start Test</Button>
+                            </Link>
                           </div>
                         </div>
                       </Card>
@@ -365,9 +367,11 @@ const SubjectTest = () => {
                             </div>
                           </div>
                           
-                          <Button size="lg" className="w-full mb-4">
-                            Start {test.title}
-                          </Button>
+                          <Link to={`/test/${test.id}`}>
+                            <Button size="lg" className="w-full mb-4">
+                              Start {test.title}
+                            </Button>
+                          </Link>
                         </div>
                       </Card>
                     ))}
