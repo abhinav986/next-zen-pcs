@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { upscSubjects } from "@/data/upscSubjects";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 
 interface TestSeries {
   id: string;
@@ -34,10 +35,61 @@ const TestSeries = () => {
   const [filter, setFilter] = useState<'all' | 'attempted' | 'pending'>('all');
   const [realTestSeries, setRealTestSeries] = useState<TestSeries[]>([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [userAttempts, setUserAttempts] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    fetchTestSeries();
+    checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchTestSeries();
+      fetchUserAttempts();
+    } else {
+      fetchTestSeries();
+    }
+  }, [user]);
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setUser(session?.user ?? null);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  };
+
+  const fetchUserAttempts = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('test_attempts')
+        .select('test_name, score, total_questions, completed_at')
+        .eq('user_id', user.id)
+        .order('completed_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Group attempts by test name and get the best score
+      const attemptsMap: Record<string, any> = {};
+      (data || []).forEach(attempt => {
+        if (!attemptsMap[attempt.test_name] || 
+            attempt.score > attemptsMap[attempt.test_name].score) {
+          attemptsMap[attempt.test_name] = attempt;
+        }
+      });
+
+      setUserAttempts(attemptsMap);
+    } catch (error) {
+      console.error('Error fetching user attempts:', error);
+    }
+  };
 
   const fetchTestSeries = async () => {
     try {
@@ -55,6 +107,10 @@ const TestSeries = () => {
           ? test.difficulty as 'Easy' | 'Medium' | 'Hard'
           : 'Medium' as 'Easy' | 'Medium' | 'Hard';
         
+        const userAttempt = userAttempts[test.title];
+        const attempted = !!userAttempt;
+        const score = userAttempt ? userAttempt.score : undefined;
+        
         return {
           id: test.id,
           title: test.title,
@@ -65,7 +121,8 @@ const TestSeries = () => {
           difficulty: validDifficulty,
           subject: test.subject_id ? upscSubjects.find(s => s.id === test.subject_id)?.name || 'General Studies' : 'General Studies',
           maxScore: test.max_score,
-          attempted: false, // Would need to check user's test attempts
+          attempted,
+          score,
         };
       });
 
@@ -77,7 +134,7 @@ const TestSeries = () => {
     }
   };
 
-  // Mock data as fallback
+  // Mock data as fallback - update with user attempts if available
   const mockTestSeries: TestSeries[] = [
     {
       id: 'prelims-1',
@@ -89,8 +146,8 @@ const TestSeries = () => {
       difficulty: 'Medium',
       subject: 'General Studies',
       maxScore: 200,
-      attempted: true,
-      score: 164
+      attempted: !!userAttempts['UPSC Prelims Mock Test 1'],
+      score: userAttempts['UPSC Prelims Mock Test 1']?.score || (Math.random() > 0.5 ? 164 : undefined)
     },
     {
       id: 'polity-advanced',
@@ -102,7 +159,8 @@ const TestSeries = () => {
       difficulty: 'Hard',
       subject: 'Indian Polity',
       maxScore: 150,
-      attempted: false
+      attempted: !!userAttempts['Indian Polity Advanced Test'],
+      score: userAttempts['Indian Polity Advanced Test']?.score
     },
     {
       id: 'history-modern',
@@ -114,8 +172,8 @@ const TestSeries = () => {
       difficulty: 'Medium',
       subject: 'History',
       maxScore: 100,
-      attempted: true,
-      score: 78
+      attempted: !!userAttempts['Modern Indian History Test'],
+      score: userAttempts['Modern Indian History Test']?.score
     },
     {
       id: 'geography-physical',
@@ -127,7 +185,8 @@ const TestSeries = () => {
       difficulty: 'Easy',
       subject: 'Geography',
       maxScore: 120,
-      attempted: false
+      attempted: !!userAttempts['Physical Geography Test'],
+      score: userAttempts['Physical Geography Test']?.score
     },
     {
       id: 'current-affairs',
@@ -139,7 +198,8 @@ const TestSeries = () => {
       difficulty: 'Medium',
       subject: 'Current Affairs',
       maxScore: 80,
-      attempted: false
+      attempted: !!userAttempts['Current Affairs Monthly Test'],
+      score: userAttempts['Current Affairs Monthly Test']?.score
     },
     {
       id: 'polity-advanced-new',
@@ -151,7 +211,8 @@ const TestSeries = () => {
       difficulty: 'Hard',
       subject: 'Polity',
       maxScore: 20,
-      attempted: false
+      attempted: !!userAttempts['Indian Polity Advanced Test'],
+      score: userAttempts['Indian Polity Advanced Test']?.score
     }
   ];
 
@@ -325,26 +386,37 @@ const TestSeries = () => {
                     <div className="flex flex-col sm:flex-row gap-2">
                       {test.attempted ? (
                         <>
-                          <Button variant="outline" className="flex-1" size="sm">
-                            <Target className="h-4 w-4 mr-2" />
-                            Retake Test
+                          <Button 
+                            variant="outline" 
+                            className="flex-1" 
+                            size="sm"
+                            asChild
+                          >
+                            <Link to={test.id === 'polity-advanced-new' ? '/polity-test' : `/test-series-test/${test.id}`}>
+                              <Target className="h-4 w-4 mr-2" />
+                              Retake Test
+                            </Link>
                           </Button>
-                          <Button className="flex-1" size="sm">
-                            View Results
+                          <Button 
+                            className="flex-1" 
+                            size="sm"
+                            asChild
+                          >
+                            <Link to={test.id === 'polity-advanced-new' ? '/polity-test' : `/test-series-test/${test.id}`}>
+                              View Results
+                            </Link>
                           </Button>
                         </>
                        ) : (
                         <Button 
                           className="flex-1"
                           size="sm"
-                          onClick={() => {
-                            if (test.id === 'polity-advanced-new') {
-                              window.location.href = '/polity-test';
-                            }
-                          }}
+                          asChild
                         >
-                          <Target className="h-4 w-4 mr-2" />
-                          Start Test
+                          <Link to={test.id === 'polity-advanced-new' ? '/polity-test' : `/test-series-test/${test.id}`}>
+                            <Target className="h-4 w-4 mr-2" />
+                            Start Test
+                          </Link>
                         </Button>
                        )}
                     </div>
