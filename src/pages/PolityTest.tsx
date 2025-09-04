@@ -62,6 +62,8 @@ const PolityTest = () => {
   useEffect(() => {
     if (authChecked && user) {
       fetchQuestions();
+    } else if (authChecked && !user) {
+      setIsLoading(false);
     }
   }, [authChecked, user]);
 
