@@ -49,7 +49,7 @@ const PolityApp = () => {
           {/* Floating Chat Toggle Button */}
           <Button
             onClick={() => setShowChat(!showChat)}
-            className="fixed bottom-6 right-6 z-50 rounded-full h-14 w-14 shadow-lg"
+            className="fixed bottom-6 left-6 z-50 rounded-full h-14 w-14 shadow-lg"
             size="icon"
             variant={showChat ? "default" : "secondary"}
           >
@@ -61,7 +61,7 @@ const PolityApp = () => {
             <div className={`fixed z-40 bg-card border border-border rounded-lg shadow-2xl ${
               isMobile 
                 ? "inset-x-4 bottom-24 top-32" 
-                : "bottom-24 right-6 w-96 h-[500px]"
+                : "bottom-24 left-6 w-96 h-[500px]"
             }`}>
               <ChatPanel onClose={() => setShowChat(false)} />
             </div>
