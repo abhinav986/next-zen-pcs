@@ -20,7 +20,7 @@ const PolityBook = () => {
   );
   const [notes, setNotes] = useState([]);
   const [completedChapters, setCompletedChapters] = useState(new Set());
-  const [showBookmarks, setShowBookmarks] = useState(!isMobile);
+  const [showBookmarks, setShowBookmarks] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [isHindi, setIsHindi] = useState(false);
 
@@ -145,13 +145,12 @@ const PolityBook = () => {
 
   return (
     <div className="flex h-full relative">
-      {/* Mobile Backdrop */}
-      {isMobile && (showSidebar || showBookmarks) && (
+      {/* Mobile Backdrop - Only for sidebar */}
+      {isMobile && showSidebar && (
         <div 
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20"
           onClick={() => {
             setShowSidebar(false);
-            setShowBookmarks(false);
           }}
         />
       )}
@@ -183,11 +182,10 @@ const PolityBook = () => {
             {/* Bookmarks Button */}
             <Button
               onClick={() => setShowBookmarks(!showBookmarks)}
-              className="rounded-full h-14 w-14 shadow-xl hover:scale-110 transition-all duration-300"
+              className="rounded-full h-14 w-14 shadow-xl hover:scale-110 transition-all duration-300 bg-secondary text-secondary-foreground hover:bg-secondary/80"
               size="icon"
-              variant={showBookmarks ? "default" : "secondary"}
             >
-              <Bookmark className="h-6 w-6" />
+              <Bookmark className="h-6 w-6" fill={showBookmarks ? "currentColor" : "none"} />
             </Button>
           </div>
         </div>
@@ -207,11 +205,11 @@ const PolityBook = () => {
 
           <Button
             onClick={() => setShowBookmarks(!showBookmarks)}
-            className="fixed top-5 right-6 z-50 rounded-full h-12 w-12 shadow-lg bg-card"
+            className="fixed top-5 right-6 z-50 rounded-full h-12 w-12 shadow-lg bg-card border-2"
             size="icon"
-            variant={showBookmarks ? "default" : "outline"}
+            variant="outline"
           >
-            <Bookmark className="h-5 w-5" />
+            <Bookmark className="h-5 w-5" fill={showBookmarks ? "currentColor" : "none"} />
           </Button>
         </>
       )}
