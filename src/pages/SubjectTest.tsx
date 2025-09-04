@@ -65,6 +65,17 @@ const SubjectTest = () => {
     }
   }, [user, subjectId]);
 
+  // Update completion flags when user attempts change
+  useEffect(() => {
+    if (!subjectTests.length) return;
+    setSubjectTests(prev =>
+      prev.map(test => {
+        const attempt = userAttempts[test.title];
+        return { ...test, attempted: !!attempt, score: attempt?.score };
+      })
+    );
+  }, [userAttempts]);
+
   const fetchUserAttempts = async () => {
     if (!user) return;
     
