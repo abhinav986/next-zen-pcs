@@ -78,6 +78,7 @@ const TestSeriesTest = () => {
   const [isStarted, setIsStarted] = useState(false);
   const [previousAttempts, setPreviousAttempts] = useState<TestAttempt[]>([]);
   const [showingPreviousResults, setShowingPreviousResults] = useState(false);
+  const [testCompleted, setTestCompleted] = useState(false);
 
   useEffect(() => {
     checkAuthentication();
@@ -317,7 +318,7 @@ const handleNextQuestion = () => {
       console.error('Error saving test attempt:', error);
     }
 
-    setShowResults(true);
+    setTestCompleted(true);
   };
 
   const getScorePercentage = () => {
@@ -419,6 +420,84 @@ const handleNextQuestion = () => {
     );
   }
 
+  // Test completion screen with options
+  if (testCompleted && !showResults && !showingPreviousResults) {
+    const percentage = getScorePercentage();
+    const score = userAnswers.filter(answer => answer.isCorrect).length;
+    
+    return (
+      <div className="min-h-screen bg-background p-4">
+        <SEOHead 
+          title={`Test Completed - ${testSeries.title}`}
+          description="Test completed successfully"
+        />
+        <div className="max-w-2xl mx-auto">
+          <Card className="text-center">
+            <CardHeader className="pb-4">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <CardTitle className="text-2xl mb-2">Test Completed!</CardTitle>
+              <p className="text-muted-foreground">
+                You have successfully completed the test
+              </p>
+            </CardHeader>
+            
+            <CardContent className="space-y-6">
+              <div className="p-6 bg-muted/50 rounded-lg">
+                <div className={`text-3xl font-bold mb-2 ${getScoreColor(percentage)}`}>
+                  {percentage}%
+                </div>
+                <p className="text-muted-foreground">
+                  {score} out of {questions.length} questions correct
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Button 
+                  onClick={() => setShowResults(true)}
+                  className="w-full"
+                  size="lg"
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  View Results
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    // Reset test state
+                    setTestCompleted(false);
+                    setIsStarted(false);
+                    setCurrentQuestionIndex(0);
+                    setUserAnswers([]);
+                    setAnsweredQuestions(new Set());
+                    setSelectedAnswer("");
+                    setIsTestCompleted(false);
+                    fetchPreviousAttempts(); // Refresh attempts
+                  }}
+                  className="w-full"
+                  size="lg"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Retake
+                </Button>
+              </div>
+              
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate(-1)}
+                className="w-full"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Tests
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
   if (showResults || showingPreviousResults) {
     const percentage = getScorePercentage();
     const sectionStats = getSectionWiseAnalysis();
@@ -453,215 +532,215 @@ const handleNextQuestion = () => {
                 </CardHeader>
               </Card>
 
-          {/* Section-wise Analysis */}
-          {Object.keys(sectionStats).length > 1 && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="text-xl">Section-wise Performance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {Object.entries(sectionStats).map(([topic, stats]) => (
-                    <div key={topic} className="p-4 border rounded-lg">
-                      <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-medium text-sm">{topic}</h3>
-                        <span className={`text-sm font-bold ${getScoreColor(stats.percentage)}`}>
-                          {stats.percentage}%
-                        </span>
-                      </div>
-                      <div className="text-xs text-muted-foreground mb-2">
-                        {stats.correct}/{stats.total} questions correct
-                      </div>
-                      <Progress value={stats.percentage} className="h-2" />
-                    </div>
-                  ))}
-                </div>
-                
-                {weakSections.length > 0 && (
-                  <div className="mt-6 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
-                    <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
-                      Areas for Improvement
-                    </h4>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {weakSections.map((topic) => (
-                        <span 
-                          key={topic}
-                          className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 text-xs rounded"
-                        >
-                          {topic} ({sectionStats[topic].percentage}%)
-                        </span>
-                      ))}
-                    </div>
-                    <p className="text-xs text-red-600 dark:text-red-300 mb-3">
-                      Focus on these topics for better performance
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {weakSections.map((topic) => (
-                        <Link
-                          key={topic}
-                          to="/study-materials"
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
-                        >
-                          <BookOpen className="w-3 h-3" />
-                          Study {topic}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="space-y-4">
-            {questions.map((question, index) => {
-              const userAnswer = userAnswers.find(answer => answer.questionId === question.id);
-              return (
-                <Card key={question.id} className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-medium mb-3">{question.question_text}</h3>
-                      
-                      <div className="space-y-2 mb-4">
-                        {Array.isArray(question.options) ? 
-                          question.options.map((option: string, optionIndex: number) => (
-                            <div 
-                              key={optionIndex}
-                              className={`p-3 rounded-lg border ${
-                                option === question.correct_answer ? 'bg-green-50 border-green-200' :
-                                option === userAnswer?.answer ? 'bg-red-50 border-red-200' :
-                                'bg-background'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                {option === question.correct_answer && (
-                                  <CheckCircle className="h-4 w-4 text-green-600" />
-                                )}
-                                {option === userAnswer?.answer && option !== question.correct_answer && (
-                                  <XCircle className="h-4 w-4 text-red-600" />
-                                )}
-                                <span>{option}</span>
-                              </div>
-                            </div>
-                          )) :
-                          Object.entries(question.options as Record<string, string>).map(([key, value]) => (
-                            <div 
-                              key={key}
-                              className={`p-3 rounded-lg border ${
-                                key === question.correct_answer ? 'bg-green-50 border-green-200' :
-                                key === userAnswer?.answer ? 'bg-red-50 border-red-200' :
-                                'bg-background'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                {key === question.correct_answer && (
-                                  <CheckCircle className="h-4 w-4 text-green-600" />
-                                )}
-                                {key === userAnswer?.answer && key !== question.correct_answer && (
-                                  <XCircle className="h-4 w-4 text-red-600" />
-                                )}
-                                <span>{key}. {value}</span>
-                              </div>
-                            </div>
-                          ))
-                        }
-                      </div>
-
-                      {question.explanation && (
-                        <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                          <p className="text-sm text-blue-800 dark:text-blue-200">
-                            <strong>{t('test.explanation')}</strong> {question.explanation}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-
-          <div className="mt-8 flex justify-center">
-            <Button onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {t('test.backToTests')}
-            </Button>
-          </div>
-          </TabsContent>
-
-          <TabsContent value="progress" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5" />
-                  Test History
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {previousAttempts.length > 0 ? (
-                  <div className="space-y-4">
-                    {previousAttempts.map((attempt, index) => (
-                      <div key={attempt.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium">Attempt {previousAttempts.length - index}</span>
-                            <span className={`text-sm font-bold ${getScoreColor(getPercentageForAttempt(attempt))}`}>
-                              {getPercentageForAttempt(attempt)}%
+              {/* Section-wise Analysis */}
+              {Object.keys(sectionStats).length > 1 && (
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle className="text-xl">Section-wise Performance</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {Object.entries(sectionStats).map(([topic, stats]) => (
+                        <div key={topic} className="p-4 border rounded-lg">
+                          <div className="flex justify-between items-center mb-2">
+                            <h3 className="font-medium text-sm">{topic}</h3>
+                            <span className={`text-sm font-bold ${getScoreColor(stats.percentage)}`}>
+                              {stats.percentage}%
                             </span>
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            {formatDateTime(attempt.completed_at)} • {attempt.score}/{attempt.total_questions} correct
+                          <div className="text-xs text-muted-foreground mb-2">
+                            {stats.correct}/{stats.total} questions correct
                           </div>
-                          {attempt.time_taken && (
-                            <div className="text-xs text-muted-foreground">
-                              Time: {formatTime(attempt.time_taken)}
+                          <Progress value={stats.percentage} className="h-2" />
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {weakSections.length > 0 && (
+                      <div className="mt-6 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+                        <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
+                          Areas for Improvement
+                        </h4>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {weakSections.map((topic) => (
+                            <span 
+                              key={topic}
+                              className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 text-xs rounded"
+                            >
+                              {topic} ({sectionStats[topic].percentage}%)
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-xs text-red-600 dark:text-red-300 mb-3">
+                          Focus on these topics for better performance
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {weakSections.map((topic) => (
+                            <Link
+                              key={topic}
+                              to="/study-materials"
+                              className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                            >
+                              <BookOpen className="w-3 h-3" />
+                              Study {topic}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="space-y-4">
+                {questions.map((question, index) => {
+                  const userAnswer = userAnswers.find(answer => answer.questionId === question.id);
+                  return (
+                    <Card key={question.id} className="p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-medium mb-3">{question.question_text}</h3>
+                          
+                          <div className="space-y-2 mb-4">
+                            {Array.isArray(question.options) ? 
+                              question.options.map((option: string, optionIndex: number) => (
+                                <div 
+                                  key={optionIndex}
+                                  className={`p-3 rounded-lg border ${
+                                    option === question.correct_answer ? 'bg-green-50 border-green-200' :
+                                    option === userAnswer?.answer ? 'bg-red-50 border-red-200' :
+                                    'bg-background'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    {option === question.correct_answer && (
+                                      <CheckCircle className="h-4 w-4 text-green-600" />
+                                    )}
+                                    {option === userAnswer?.answer && option !== question.correct_answer && (
+                                      <XCircle className="h-4 w-4 text-red-600" />
+                                    )}
+                                    <span>{option}</span>
+                                  </div>
+                                </div>
+                              )) :
+                              Object.entries(question.options as Record<string, string>).map(([key, value]) => (
+                                <div 
+                                  key={key}
+                                  className={`p-3 rounded-lg border ${
+                                    key === question.correct_answer ? 'bg-green-50 border-green-200' :
+                                    key === userAnswer?.answer ? 'bg-red-50 border-red-200' :
+                                    'bg-background'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    {key === question.correct_answer && (
+                                      <CheckCircle className="h-4 w-4 text-green-600" />
+                                    )}
+                                    {key === userAnswer?.answer && key !== question.correct_answer && (
+                                      <XCircle className="h-4 w-4 text-red-600" />
+                                    )}
+                                    <span>{key}. {value}</span>
+                                  </div>
+                                </div>
+                              ))
+                            }
+                          </div>
+
+                          {question.explanation && (
+                            <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                              <p className="text-sm text-blue-800 dark:text-blue-200">
+                                <strong>{t('test.explanation')}</strong> {question.explanation}
+                              </p>
                             </div>
                           )}
                         </div>
-                        <Progress value={getPercentageForAttempt(attempt)} className="w-20 h-2" />
                       </div>
-                    ))}
-                    
-                    <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                      <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Progress Summary</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <div className="text-muted-foreground">Total Attempts</div>
-                          <div className="font-bold">{previousAttempts.length}</div>
-                        </div>
-                        <div>
-                          <div className="text-muted-foreground">Best Score</div>
-                          <div className="font-bold text-green-600">
-                            {Math.max(...previousAttempts.map(getPercentageForAttempt))}%
+                    </Card>
+                  );
+                })}
+              </div>
+
+              <div className="mt-8 flex justify-center">
+                <Button onClick={() => navigate(-1)}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  {t('test.backToTests')}
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="progress" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
+                    Test History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {previousAttempts.length > 0 ? (
+                    <div className="space-y-4">
+                      {previousAttempts.map((attempt, index) => (
+                        <div key={attempt.id} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium">Attempt {previousAttempts.length - index}</span>
+                              <span className={`text-sm font-bold ${getScoreColor(getPercentageForAttempt(attempt))}`}>
+                                {getPercentageForAttempt(attempt)}%
+                              </span>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {formatDateTime(attempt.completed_at)} • {attempt.score}/{attempt.total_questions} correct
+                            </div>
+                            {attempt.time_taken && (
+                              <div className="text-xs text-muted-foreground">
+                                Time: {formatTime(attempt.time_taken)}
+                              </div>
+                            )}
                           </div>
+                          <Progress value={getPercentageForAttempt(attempt)} className="w-20 h-2" />
                         </div>
-                        <div>
-                          <div className="text-muted-foreground">Average Score</div>
-                          <div className="font-bold">
-                            {Math.round(previousAttempts.reduce((sum, attempt) => sum + getPercentageForAttempt(attempt), 0) / previousAttempts.length)}%
+                      ))}
+                      
+                      <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Progress Summary</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <div className="text-muted-foreground">Total Attempts</div>
+                            <div className="font-bold">{previousAttempts.length}</div>
                           </div>
-                        </div>
-                        <div>
-                          <div className="text-muted-foreground">Latest Score</div>
-                          <div className={`font-bold ${getScoreColor(getPercentageForAttempt(previousAttempts[0]))}`}>
-                            {getPercentageForAttempt(previousAttempts[0])}%
+                          <div>
+                            <div className="text-muted-foreground">Best Score</div>
+                            <div className="font-bold text-green-600">
+                              {Math.max(...previousAttempts.map(getPercentageForAttempt))}%
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-muted-foreground">Average Score</div>
+                            <div className="font-bold">
+                              {Math.round(previousAttempts.reduce((sum, attempt) => sum + getPercentageForAttempt(attempt), 0) / previousAttempts.length)}%
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-muted-foreground">Latest Score</div>
+                            <div className={`font-bold ${getScoreColor(getPercentageForAttempt(previousAttempts[0]))}`}>
+                              {getPercentageForAttempt(previousAttempts[0])}%
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-muted-foreground">No previous attempts found</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-muted-foreground">No previous attempts found</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
