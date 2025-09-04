@@ -469,7 +469,7 @@ const PolityTest = () => {
 
           <div className="space-y-4">
             {questions.map((question, index) => {
-              const userAnswer = userAnswers[index];
+              const userAnswer = userAnswers.find(answer => answer.questionId === question.id);
               return (
                 <Card key={question.id}>
                   <CardHeader>
