@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Clock, CheckCircle, XCircle, ArrowLeft, BookOpen, SkipForward, SkipBack } from "lucide-react";
+import { Clock, CheckCircle, XCircle, ArrowLeft, BookOpen, SkipForward, SkipBack, Pause, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -47,6 +47,7 @@ const PolityTest = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showResults, setShowResults] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   const getTestTitle = () => {
     if (chapterFilter) {
@@ -85,13 +86,13 @@ const PolityTest = () => {
   };
 
   useEffect(() => {
-    if (timeLeft > 0 && !isTestCompleted) {
+    if (timeLeft > 0 && !isTestCompleted && !isPaused) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     } else if (timeLeft === 0) {
       handleTestSubmit();
     }
-  }, [timeLeft, isTestCompleted]);
+  }, [timeLeft, isTestCompleted, isPaused]);
 
   const fetchQuestions = async () => {
     try {
@@ -539,11 +540,33 @@ const PolityTest = () => {
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <div className="min-h-screen bg-background p-4 relative">
       <SEOHead 
         title={`${getTestTitle()} - UPSC Preparation`}
         description={`Take the ${chapterFilter ? 'chapter-specific' : 'comprehensive'} Indian Polity test with MCQ and True/False questions for UPSC preparation`}
       />
+      
+      {/* Pause Overlay */}
+      {isPaused && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <Card className="w-full max-w-md">
+            <CardContent className="pt-6 text-center">
+              <Pause className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Test Paused</h3>
+              <p className="text-muted-foreground mb-4">
+                Take your time! Click resume when you're ready to continue.
+              </p>
+              <Button 
+                onClick={() => setIsPaused(false)}
+                className="w-full"
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Resume Test
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       
       <div className="max-w-4xl mx-auto">
         {/* Header */}
@@ -557,9 +580,36 @@ const PolityTest = () => {
           </Button>
           
           <div className="flex items-center gap-4">
+            {/* Pause/Resume Button for Chapter Tests */}
+            {chapterFilter && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsPaused(!isPaused)}
+                className="flex items-center gap-2"
+              >
+                {isPaused ? (
+                  <>
+                    <Play className="h-4 w-4" />
+                    Resume
+                  </>
+                ) : (
+                  <>
+                    <Pause className="h-4 w-4" />
+                    Take Rest
+                  </>
+                )}
+              </Button>
+            )}
+            
             <div className="flex items-center gap-2 text-muted-foreground">
               <Clock className="h-4 w-4" />
               <span className="font-mono">{formatTime(timeLeft)}</span>
+              {isPaused && (
+                <span className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded">
+                  PAUSED
+                </span>
+              )}
             </div>
           </div>
         </div>
