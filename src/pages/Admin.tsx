@@ -973,9 +973,11 @@ const Admin = () => {
                           <SelectValue placeholder="Select correct answer" />
                         </SelectTrigger>
                         <SelectContent>
-                          {(editingQuestion.options as string[]).map((option, index) => (
+                          {(editingQuestion.options as string[])
+                            .filter(option => option && option.trim() !== '')
+                            .map((option, index) => (
                             <SelectItem key={index} value={option}>
-                              {option || `Option ${index + 1}`}
+                              {option}
                             </SelectItem>
                           ))}
                         </SelectContent>
