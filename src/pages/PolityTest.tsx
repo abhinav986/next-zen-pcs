@@ -10,6 +10,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
 import { QuestionNavigation } from "@/components/QuestionNavigation";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useLanguage } from "@/context/LanguageContext";
 import { User, Session } from "@supabase/supabase-js";
 
 interface Question {
@@ -34,6 +36,7 @@ const PolityTest = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const chapterFilter = searchParams.get('chapter');
+  const { t } = useLanguage();
   
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -199,7 +202,7 @@ const PolityTest = () => {
 
   const handleNextQuestion = () => {
     if (!selectedAnswer) {
-      toast.error('Please select an answer');
+      toast.error(t('test.selectAnswer'));
       return;
     }
 
@@ -334,7 +337,7 @@ const PolityTest = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading test questions...</p>
+          <p className="text-muted-foreground">{t('loading.questions')}</p>
         </div>
       </div>
     );
@@ -349,17 +352,17 @@ const PolityTest = () => {
             <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-primary font-bold text-lg">!</span>
             </div>
-            <h3 className="text-lg font-semibold mb-2">Sign In Required</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('nav.signInRequired')}</h3>
             <p className="text-muted-foreground mb-4">
-              Please sign in to take the test and track your performance across sessions.
+              {t('nav.signInDesc')}
             </p>
             <div className="flex gap-2 justify-center">
               <Button asChild>
-                <Link to="/auth">Sign In</Link>
+                <Link to="/auth">{t('nav.signIn')}</Link>
               </Button>
               <Button variant="outline" onClick={() => navigate(chapterFilter ? `/study-materials/polity?chapter=${encodeURIComponent(chapterFilter)}` : '/test-series')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Go Back
+                {t('nav.goBack')}
               </Button>
             </div>
           </CardContent>
@@ -374,13 +377,13 @@ const PolityTest = () => {
         <Card className="w-full max-w-md">
           <CardContent className="pt-6 text-center">
             <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Questions Available</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('error.noQuestions')}</h3>
             <p className="text-muted-foreground mb-4">
-              Unable to load test questions. Please try again later.
+              {t('error.noQuestionsDesc')}
             </p>
             <Button onClick={() => navigate('/test-series')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Tests
+              {t('test.backToTests')}
             </Button>
           </CardContent>
         </Card>
@@ -402,12 +405,12 @@ const PolityTest = () => {
         <div className="max-w-4xl mx-auto">
           <Card className="mb-6">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl">{chapterFilter ? "Chapter Test Completed!" : "Test Completed!"}</CardTitle>
+              <CardTitle className="text-2xl">{t('test.completed')}</CardTitle>
               <div className={`text-4xl font-bold ${getScoreColor(percentage)}`}>
                 {percentage}%
               </div>
               <p className="text-muted-foreground">
-                You scored {userAnswers.filter(a => a.isCorrect).length} out of {questions.length} questions correctly
+                {t('test.score')} {userAnswers.filter(a => a.isCorrect).length} {t('test.outOf')} {questions.length} {t('test.questionsCorrectly')}
               </p>
             </CardHeader>
           </Card>
@@ -505,7 +508,7 @@ const PolityTest = () => {
                             <span className="text-green-600">{question.correct_answer}</span>
                           </p>
                           <p className="text-muted-foreground">
-                            <span className="font-medium">Explanation:</span> {question.explanation}
+                            <span className="font-medium">{t('test.explanation')}</span> {question.explanation}
                           </p>
                         </div>
                       </div>
@@ -552,16 +555,16 @@ const PolityTest = () => {
           <Card className="w-full max-w-md">
             <CardContent className="pt-6 text-center">
               <Pause className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Test Paused</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('test.paused')}</h3>
               <p className="text-muted-foreground mb-4">
-                Take your time! Click resume when you're ready to continue.
+                {t('test.pausedDesc')}
               </p>
               <Button 
                 onClick={() => setIsPaused(false)}
                 className="w-full"
               >
                 <Play className="h-4 w-4 mr-2" />
-                Resume Test
+                {t('test.resumeTest')}
               </Button>
             </CardContent>
           </Card>
@@ -580,6 +583,7 @@ const PolityTest = () => {
           </Button>
           
           <div className="flex items-center gap-4">
+            <LanguageToggle />
             {/* Pause/Resume Button for Chapter Tests */}
             {chapterFilter && (
               <Button
@@ -591,12 +595,12 @@ const PolityTest = () => {
                 {isPaused ? (
                   <>
                     <Play className="h-4 w-4" />
-                    Resume
+                    {t('test.resume')}
                   </>
                 ) : (
                   <>
                     <Pause className="h-4 w-4" />
-                    Take Rest
+                    {t('test.pause')}
                   </>
                 )}
               </Button>
@@ -618,9 +622,9 @@ const PolityTest = () => {
         <Card className="mb-6">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">
-                Question {currentQuestionIndex + 1} of {questions.length}
-              </span>
+            <span className="text-sm font-medium">
+              {t('test.questions')} {currentQuestionIndex + 1} {t('test.outOf')} {questions.length}
+            </span>
               <span className="text-sm text-muted-foreground">
                 {Math.round(progress)}% Complete
               </span>
@@ -694,7 +698,7 @@ const PolityTest = () => {
                       disabled={currentQuestionIndex === 0}
                     >
                       <SkipBack className="h-4 w-4 mr-1" />
-                      Previous
+                      {t('test.previous')}
                     </Button>
                     <Button 
                       variant="outline" 
@@ -702,17 +706,17 @@ const PolityTest = () => {
                       disabled={currentQuestionIndex === questions.length - 1}
                     >
                       <SkipForward className="h-4 w-4 mr-1" />
-                      Skip
+                      {t('test.skip')}
                     </Button>
                   </div>
                   
                   <div className="flex gap-2">
                     <Button onClick={handleNextQuestion} disabled={!selectedAnswer}>
-                      {currentQuestionIndex === questions.length - 1 ? 'Submit Test' : 'Next Question'}
+                      {currentQuestionIndex === questions.length - 1 ? t('test.submit') : t('test.next')}
                     </Button>
                     {currentQuestionIndex === questions.length - 1 && (
                       <Button variant="destructive" onClick={handleTestSubmit}>
-                        Submit Test
+                        {t('test.submit')}
                       </Button>
                     )}
                   </div>
