@@ -113,6 +113,101 @@ export type Database = {
         }
         Relationships: []
       }
+      test_questions: {
+        Row: {
+          correct_answer: string
+          created_at: string
+          difficulty: string | null
+          explanation: string | null
+          id: string
+          options: Json
+          question_order: number | null
+          question_text: string
+          test_series_id: string | null
+          topic: string | null
+        }
+        Insert: {
+          correct_answer: string
+          created_at?: string
+          difficulty?: string | null
+          explanation?: string | null
+          id?: string
+          options: Json
+          question_order?: number | null
+          question_text: string
+          test_series_id?: string | null
+          topic?: string | null
+        }
+        Update: {
+          correct_answer?: string
+          created_at?: string
+          difficulty?: string | null
+          explanation?: string | null
+          id?: string
+          options?: Json
+          question_order?: number | null
+          question_text?: string
+          test_series_id?: string | null
+          topic?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_questions_test_series_id_fkey"
+            columns: ["test_series_id"]
+            isOneToOne: false
+            referencedRelation: "test_series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_series: {
+        Row: {
+          chapter_name: string | null
+          created_at: string
+          description: string | null
+          difficulty: string
+          duration: number
+          id: string
+          is_active: boolean
+          max_score: number
+          subject_id: string | null
+          test_type: string
+          title: string
+          total_questions: number
+          updated_at: string
+        }
+        Insert: {
+          chapter_name?: string | null
+          created_at?: string
+          description?: string | null
+          difficulty?: string
+          duration: number
+          id?: string
+          is_active?: boolean
+          max_score: number
+          subject_id?: string | null
+          test_type?: string
+          title: string
+          total_questions: number
+          updated_at?: string
+        }
+        Update: {
+          chapter_name?: string | null
+          created_at?: string
+          description?: string | null
+          difficulty?: string
+          duration?: number
+          id?: string
+          is_active?: boolean
+          max_score?: number
+          subject_id?: string | null
+          test_type?: string
+          title?: string
+          total_questions?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

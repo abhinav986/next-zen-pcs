@@ -13,6 +13,7 @@ import StudyMaterials from "./pages/StudyMaterials";
 import PolityApp from "./components/study-material/polity/PolityApp";
 import PolityTest from "./pages/PolityTest";
 import SubjectTest from "./pages/SubjectTest";
+import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/test-series" element={<TestSeries />} />
             <Route path="/test-series/:subjectId" element={<SubjectTest />} />
