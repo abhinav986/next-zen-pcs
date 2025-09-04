@@ -21,7 +21,7 @@ const PolityBook = () => {
   const [notes, setNotes] = useState([]);
   const [completedChapters, setCompletedChapters] = useState(new Set());
   const [showBookmarks, setShowBookmarks] = useState(!isMobile);
-  const [showSidebar, setShowSidebar] = useState(!isMobile);
+  const [showSidebar, setShowSidebar] = useState(false);
   const [isHindi, setIsHindi] = useState(false);
 
   // Update URL when chapter changes

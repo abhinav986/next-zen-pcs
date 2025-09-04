@@ -36,20 +36,9 @@ const PolityApp = () => {
       <div className="min-h-screen bg-background pt-16">
         <header className="border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60">
           <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate('/study-materials')}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Study Materials
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Indian Polity & Governance</h1>
-                <p className="text-muted-foreground">Interactive study materials with AI assistance</p>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Indian Polity & Governance</h1>
+              <p className="text-muted-foreground">Interactive study materials with AI assistance</p>
             </div>
           </div>
         </header>
