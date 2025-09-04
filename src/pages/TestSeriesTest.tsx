@@ -535,85 +535,92 @@ const handleNextQuestion = () => {
           </CardHeader>
         </Card>
 
-        <div className="grid lg:grid-cols-4 gap-6">
-          {/* Question Navigation */}
-          <div className="lg:col-span-1">
-            <QuestionNavigation
-              totalQuestions={questions.length}
-              currentQuestion={currentQuestionIndex}
-              answeredQuestions={answeredQuestions}
-              onQuestionSelect={handleQuestionNavigation}
-            />
-          </div>
+          <div className="grid lg:grid-cols-4 gap-6">
+            {/* Question Navigation */}
+            <div className="lg:col-span-1 order-2 lg:order-1">
+              <QuestionNavigation
+                totalQuestions={questions.length}
+                currentQuestion={currentQuestionIndex}
+                answeredQuestions={answeredQuestions}
+                onQuestionSelect={handleQuestionNavigation}
+                className="sticky top-20"
+              />
+            </div>
 
-          {/* Main Question Area */}
-          <div className="lg:col-span-3">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">
-                    Question {currentQuestionIndex + 1} of {questions.length}
-                  </CardTitle>
-                  <Progress value={progress} className="w-32" />
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-6">
-                <h2 className="text-lg leading-relaxed">{currentQuestion.question_text}</h2>
-                
-                <RadioGroup value={selectedAnswer} onValueChange={handleAnswerSelect}>
-                  {Array.isArray(currentQuestion.options) ? 
-                    currentQuestion.options.map((option: string, index: number) => (
-                      <div key={index} className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted/50">
-                        <RadioGroupItem value={option} id={`option-${index}`} />
-                        <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
-                          {option}
-                        </Label>
-                      </div>
-                    )) :
-                    Object.entries(currentQuestion.options as Record<string, string>).map(([key, value]) => (
-                      <div key={key} className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted/50">
-                        <RadioGroupItem value={key} id={`option-${key}`} />
-                        <Label htmlFor={`option-${key}`} className="flex-1 cursor-pointer">
-                          {key}. {value}
-                        </Label>
-                      </div>
-                    ))
-                  }
-                </RadioGroup>
-
-                <div className="flex justify-between">
-                  <div className="flex gap-2">
-                     <Button
-                       variant="outline"
-                       onClick={handlePreviousQuestion}
-                       disabled={currentQuestionIndex === 0}
-                     >
-                       <SkipBack className="h-4 w-4 mr-2" />
-                       {t('test.previous')}
-                     </Button>
-                     
-                     <Button
-                       variant="outline"
-                       onClick={handleSkipQuestion}
-                       disabled={currentQuestionIndex === questions.length - 1}
-                     >
-                       {t('test.skip')}
-                       <SkipForward className="h-4 w-4 ml-2" />
-                     </Button>
+            {/* Main Question Area */}
+            <div className="lg:col-span-3 order-1 lg:order-2">
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <CardTitle className="text-base sm:text-lg">
+                      Question {currentQuestionIndex + 1} of {questions.length}
+                    </CardTitle>
+                    <Progress value={progress} className="w-full sm:w-32" />
                   </div>
+                </CardHeader>
+                
+                <CardContent className="space-y-6">
+                  <h2 className="text-base sm:text-lg leading-relaxed">{currentQuestion.question_text}</h2>
+                
+                  <RadioGroup value={selectedAnswer} onValueChange={handleAnswerSelect}>
+                    {Array.isArray(currentQuestion.options) ? 
+                      currentQuestion.options.map((option: string, index: number) => (
+                        <div key={index} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer">
+                          <RadioGroupItem value={option} id={`option-${index}`} className="mt-1" />
+                          <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer text-sm sm:text-base leading-relaxed">
+                            {option}
+                          </Label>
+                        </div>
+                      )) :
+                      Object.entries(currentQuestion.options as Record<string, string>).map(([key, value]) => (
+                        <div key={key} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer">
+                          <RadioGroupItem value={key} id={`option-${key}`} className="mt-1" />
+                          <Label htmlFor={`option-${key}`} className="flex-1 cursor-pointer text-sm sm:text-base leading-relaxed">
+                            <span className="font-medium">{key}.</span> {value}
+                          </Label>
+                        </div>
+                      ))
+                    }
+                  </RadioGroup>
 
-                   <div className="flex gap-2">
-                     {currentQuestionIndex === questions.length - 1 ? (
-                       <Button onClick={handleTestSubmit} className="min-w-[100px]">
-                         {t('test.submit')}
+                  <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4 border-t">
+                    <div className="flex gap-2 order-2 sm:order-1">
+                       <Button
+                         variant="outline"
+                         onClick={handlePreviousQuestion}
+                         disabled={currentQuestionIndex === 0}
+                         size="sm"
+                         className="flex-1 sm:flex-none"
+                       >
+                         <SkipBack className="h-4 w-4 mr-2" />
+                         <span className="hidden sm:inline">{t('test.previous')}</span>
+                         <span className="sm:hidden">Prev</span>
                        </Button>
-                     ) : (
-                       <Button onClick={handleNextQuestion} className="min-w-[100px]">
-                         {t('test.next')}
+                       
+                       <Button
+                         variant="outline"
+                         onClick={handleSkipQuestion}
+                         disabled={currentQuestionIndex === questions.length - 1}
+                         size="sm"
+                         className="flex-1 sm:flex-none"
+                       >
+                         <span className="hidden sm:inline">{t('test.skip')}</span>
+                         <span className="sm:hidden">Skip</span>
+                         <SkipForward className="h-4 w-4 ml-2" />
                        </Button>
-                     )}
-                   </div>
+                    </div>
+
+                     <div className="flex gap-2 order-1 sm:order-2">
+                       {currentQuestionIndex === questions.length - 1 ? (
+                         <Button onClick={handleTestSubmit} className="min-w-[100px] flex-1 sm:flex-none" size="sm">
+                           {t('test.submit')}
+                         </Button>
+                       ) : (
+                         <Button onClick={handleNextQuestion} className="min-w-[100px] flex-1 sm:flex-none" size="sm">
+                           {t('test.next')}
+                         </Button>
+                       )}
+                     </div>
                 </div>
               </CardContent>
             </Card>

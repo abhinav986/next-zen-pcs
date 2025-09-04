@@ -83,28 +83,31 @@ export const QuestionNavigation = ({
       </CardHeader>
       
       <CardContent>
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-4 sm:grid-cols-5 gap-1 sm:gap-2">
           {Array.from({ length: totalQuestions }, (_, index) => (
             <Button
               key={index}
               variant="outline"
               size="sm"
-              className={`h-10 w-10 p-0 ${getStatusColor(index)}`}
+              className={`h-8 w-8 sm:h-10 sm:w-10 p-0 text-xs ${getStatusColor(index)}`}
               onClick={() => onQuestionSelect(index)}
             >
               <span className="sr-only">
                 Question {index + 1} - {getQuestionStatus(index)}
               </span>
-              <div className="flex flex-col items-center">
-                <span className="text-xs font-medium">{index + 1}</span>
-                {getStatusIcon(index)}
+              <div className="flex flex-col items-center justify-center">
+                <span className="text-xs font-medium leading-none">{index + 1}</span>
+                <div className="mt-0.5 hidden sm:block">
+                  {getStatusIcon(index)}
+                </div>
               </div>
             </Button>
           ))}
         </div>
         
         <div className="mt-4 text-xs text-muted-foreground">
-          <p>Click on any question number to navigate directly to that question.</p>
+          <p className="hidden sm:block">Click on any question number to navigate directly to that question.</p>
+          <p className="sm:hidden">Tap question numbers to navigate.</p>
         </div>
       </CardContent>
     </Card>

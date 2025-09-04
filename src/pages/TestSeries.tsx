@@ -275,38 +275,38 @@ const TestSeries = () => {
                 {filteredTests.map((test) => (
                 <Card key={test.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div className="flex-1">
-                        <CardTitle className="flex items-center gap-2">
-                          {test.attempted && <CheckCircle2 className="h-5 w-5 text-green-600" />}
-                          {test.title}
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                          {test.attempted && <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />}
+                          <span className="break-words">{test.title}</span>
                         </CardTitle>
-                        <CardDescription className="mt-2">
+                        <CardDescription className="mt-2 text-sm">
                           {test.description}
                         </CardDescription>
                       </div>
-                      <Badge className={getDifficultyColor(test.difficulty)}>
+                      <Badge className={`${getDifficultyColor(test.difficulty)} flex-shrink-0`}>
                         {test.difficulty}
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
+                    <div className="grid grid-cols-2 gap-3 mb-4 text-xs sm:text-sm">
                       <div className="flex items-center gap-2">
-                        <Timer className="h-4 w-4 text-muted-foreground" />
-                        <span>{test.duration} mins</span>
+                        <Timer className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate">{test.duration} mins</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <BookOpen className="h-4 w-4 text-muted-foreground" />
-                        <span>{test.questions} questions</span>
+                        <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate">{test.questions} questions</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>{test.participants.toLocaleString()} taken</span>
+                        <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate">{test.participants.toLocaleString()} taken</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Trophy className="h-4 w-4 text-muted-foreground" />
-                        <span>{test.maxScore} marks</span>
+                        <Trophy className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate">{test.maxScore} marks</span>
                       </div>
                     </div>
 
@@ -322,20 +322,21 @@ const TestSeries = () => {
                       </div>
                     )}
 
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       {test.attempted ? (
                         <>
-                          <Button variant="outline" className="flex-1">
+                          <Button variant="outline" className="flex-1" size="sm">
                             <Target className="h-4 w-4 mr-2" />
                             Retake Test
                           </Button>
-                          <Button className="flex-1">
+                          <Button className="flex-1" size="sm">
                             View Results
                           </Button>
                         </>
                        ) : (
                         <Button 
                           className="flex-1"
+                          size="sm"
                           onClick={() => {
                             if (test.id === 'polity-advanced-new') {
                               window.location.href = '/polity-test';

@@ -214,10 +214,10 @@ const SubjectTest = () => {
           </div>
 
           <Tabs defaultValue="chapters" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="chapters">Chapter Tests</TabsTrigger>
-              <TabsTrigger value="full">Full Test</TabsTrigger>
-              <TabsTrigger value="weak">Weak Sections</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsTrigger value="chapters" className="text-xs sm:text-sm">Chapter Tests</TabsTrigger>
+              <TabsTrigger value="full" className="text-xs sm:text-sm">Full Test</TabsTrigger>
+              <TabsTrigger value="weak" className="text-xs sm:text-sm">Weak Sections</TabsTrigger>
             </TabsList>
 
             {/* Chapter-wise Tests */}
@@ -234,100 +234,102 @@ const SubjectTest = () => {
                 {subjectTests.filter(test => test.test_type === 'chapter').length > 0 && (
                   <div className="grid gap-4 mb-8">
                     <h3 className="text-lg font-medium text-foreground">Available Chapter Tests</h3>
-                    {subjectTests.filter(test => test.test_type === 'chapter').map((test) => (
-                      <Card key={test.id} className="p-6">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-lg font-semibold text-foreground">{test.title}</h3>
-                              <Badge className={getDifficultyColor(test.difficulty)}>
-                                {test.difficulty}
-                              </Badge>
-                            </div>
-                            
-                            <p className="text-muted-foreground mb-4">{test.description}</p>
-                            
-                            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Target className="h-4 w-4" />
-                                {test.total_questions} Questions
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-4 w-4" />
-                                {test.duration} min
-                              </div>
-                              {test.chapter_name && (
-                                <Badge variant="outline">{test.chapter_name}</Badge>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <div className="flex gap-2">
-                            <Link to={`/test/${test.id}`}>
-                              <Button>Start Test</Button>
-                            </Link>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
+                     {subjectTests.filter(test => test.test_type === 'chapter').map((test) => (
+                       <Card key={test.id} className="p-4 sm:p-6">
+                         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                           <div className="flex-1">
+                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                               <h3 className="text-base sm:text-lg font-semibold text-foreground">{test.title}</h3>
+                               <Badge className={getDifficultyColor(test.difficulty)}>
+                                 {test.difficulty}
+                               </Badge>
+                             </div>
+                             
+                             <p className="text-muted-foreground mb-4 text-sm">{test.description}</p>
+                             
+                             <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-xs sm:text-sm text-muted-foreground">
+                               <div className="flex items-center gap-1">
+                                 <Target className="h-3 w-3 sm:h-4 sm:w-4" />
+                                 {test.total_questions} Questions
+                               </div>
+                               <div className="flex items-center gap-1">
+                                 <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                                 {test.duration} min
+                               </div>
+                               {test.chapter_name && (
+                                 <Badge variant="outline" className="text-xs">{test.chapter_name}</Badge>
+                               )}
+                             </div>
+                           </div>
+                           
+                           <div className="flex gap-2">
+                             <Link to={`/test/${test.id}`} className="flex-1 lg:flex-none">
+                               <Button className="w-full" size="sm">Start Test</Button>
+                             </Link>
+                           </div>
+                         </div>
+                       </Card>
+                     ))}
+                   </div>
+                 )}
 
-                {/* Mock chapter tests */}
-                <div className="grid gap-4">
-                  <h3 className="text-lg font-medium text-foreground">Practice Chapter Tests</h3>
-                  {chapterTests.map((test) => (
-                    <Card key={test.id} className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-semibold text-foreground">{test.title}</h3>
-                            <Badge className={getDifficultyColor(test.difficulty)}>
-                              {test.difficulty}
-                            </Badge>
-                            {test.completed && (
-                              <Badge variant="default">Completed</Badge>
-                            )}
-                          </div>
-                          
-                          <p className="text-muted-foreground mb-4">{test.description}</p>
-                          
-                          <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Target className="h-4 w-4" />
-                              {test.questions} Questions
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              {test.duration} min
-                            </div>
-                            {test.completed && test.score !== undefined && (
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-foreground">
-                                  Score: {test.score}/{test.maxScore}
-                                </span>
-                                <Progress 
-                                  value={(test.score / test.maxScore) * 100} 
-                                  className="w-16 h-2"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="flex gap-2">
-                          {test.completed ? (
-                            <>
-                              <Button variant="outline">View Results</Button>
-                              <Button>Retake</Button>
-                            </>
-                          ) : (
-                            <Button>Start Test</Button>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+                 {/* Mock chapter tests */}
+                 <div className="grid gap-4">
+                   <h3 className="text-lg font-medium text-foreground">Practice Chapter Tests</h3>
+                   {chapterTests.map((test) => (
+                     <Card key={test.id} className="p-4 sm:p-6">
+                       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                         <div className="flex-1">
+                           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                             <h3 className="text-base sm:text-lg font-semibold text-foreground">{test.title}</h3>
+                             <div className="flex gap-2">
+                               <Badge className={getDifficultyColor(test.difficulty)}>
+                                 {test.difficulty}
+                               </Badge>
+                               {test.completed && (
+                                 <Badge variant="default">Completed</Badge>
+                               )}
+                             </div>
+                           </div>
+                           
+                           <p className="text-muted-foreground mb-4 text-sm">{test.description}</p>
+                           
+                           <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-xs sm:text-sm text-muted-foreground">
+                             <div className="flex items-center gap-1">
+                               <Target className="h-3 w-3 sm:h-4 sm:w-4" />
+                               {test.questions} Questions
+                             </div>
+                             <div className="flex items-center gap-1">
+                               <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                               {test.duration} min
+                             </div>
+                             {test.completed && test.score !== undefined && (
+                               <div className="flex items-center gap-2">
+                                 <span className="font-medium text-foreground text-xs">
+                                   Score: {test.score}/{test.maxScore}
+                                 </span>
+                                 <Progress 
+                                   value={(test.score / test.maxScore) * 100} 
+                                   className="w-12 sm:w-16 h-2"
+                                 />
+                               </div>
+                             )}
+                           </div>
+                         </div>
+                         
+                         <div className="flex flex-col sm:flex-row gap-2">
+                           {test.completed ? (
+                             <>
+                               <Button variant="outline" size="sm" className="flex-1 sm:flex-none">View Results</Button>
+                               <Button size="sm" className="flex-1 sm:flex-none">Retake</Button>
+                             </>
+                           ) : (
+                             <Button size="sm" className="flex-1 sm:flex-none">Start Test</Button>
+                           )}
+                         </div>
+                       </div>
+                     </Card>
+                   ))}
                 </div>
               </div>
             </TabsContent>
