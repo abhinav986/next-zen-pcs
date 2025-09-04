@@ -49,19 +49,23 @@ const PolityApp = () => {
           {/* Floating Chat Toggle Button */}
           <Button
             onClick={() => setShowChat(!showChat)}
-            className="fixed bottom-6 left-6 z-50 rounded-full h-14 w-14 shadow-lg"
+            className={`fixed z-50 rounded-full h-12 w-12 shadow-lg ${
+              isMobile 
+                ? "bottom-40 right-4" 
+                : "bottom-6 right-6 h-14 w-14"
+            }`}
             size="icon"
             variant={showChat ? "default" : "secondary"}
           >
-            <MessageCircle className="h-6 w-6" />
+            <MessageCircle className={`${isMobile ? "h-5 w-5" : "h-6 w-6"}`} />
           </Button>
 
           {/* Floating Chat Panel */}
           {showChat && (
             <div className={`fixed z-40 bg-card border border-border rounded-lg shadow-2xl ${
               isMobile 
-                ? "inset-x-4 bottom-24 top-32" 
-                : "bottom-24 left-6 w-96 h-[500px]"
+                ? "inset-x-4 bottom-56 top-32" 
+                : "bottom-24 right-6 w-96 h-[500px]"
             }`}>
               <ChatPanel onClose={() => setShowChat(false)} />
             </div>
