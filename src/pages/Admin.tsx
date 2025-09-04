@@ -48,6 +48,8 @@ const Admin = () => {
   const [selectedTestId, setSelectedTestId] = useState<string>("");
   const [isAddingTest, setIsAddingTest] = useState(false);
   const [isAddingQuestion, setIsAddingQuestion] = useState(false);
+  const [editingTest, setEditingTest] = useState<TestSeries | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<TestQuestion | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -311,6 +313,82 @@ const Admin = () => {
     }
   };
 
+  const handleEditTest = async () => {
+    if (!editingTest) return;
+
+    try {
+      const { error } = await supabase
+        .from('test_series')
+        .update({
+          title: editingTest.title,
+          description: editingTest.description,
+          subject_id: editingTest.subject_id,
+          duration: editingTest.duration,
+          difficulty: editingTest.difficulty,
+          test_type: editingTest.test_type,
+          chapter_name: editingTest.chapter_name,
+          is_active: editingTest.is_active
+        })
+        .eq('id', editingTest.id);
+
+      if (error) throw error;
+
+      setTestSeries(testSeries.map(test => 
+        test.id === editingTest.id ? editingTest : test
+      ));
+      setEditingTest(null);
+      
+      toast({
+        title: "Success",
+        description: "Test series updated successfully"
+      });
+    } catch (error) {
+      console.error('Error updating test:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update test series",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEditQuestion = async () => {
+    if (!editingQuestion) return;
+
+    try {
+      const { error } = await supabase
+        .from('test_questions')
+        .update({
+          question_text: editingQuestion.question_text,
+          options: editingQuestion.options,
+          correct_answer: editingQuestion.correct_answer,
+          explanation: editingQuestion.explanation,
+          difficulty: editingQuestion.difficulty,
+          topic: editingQuestion.topic
+        })
+        .eq('id', editingQuestion.id);
+
+      if (error) throw error;
+
+      setQuestions(questions.map(q => 
+        q.id === editingQuestion.id ? editingQuestion : q
+      ));
+      setEditingQuestion(null);
+      
+      toast({
+        title: "Success",
+        description: "Question updated successfully"
+      });
+    } catch (error) {
+      console.error('Error updating question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update question",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -460,6 +538,112 @@ const Admin = () => {
                   </Dialog>
                 </div>
 
+                {/* Edit Test Dialog */}
+                <Dialog open={!!editingTest} onOpenChange={() => setEditingTest(null)}>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Edit Test Series</DialogTitle>
+                    </DialogHeader>
+                    {editingTest && (
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="edit-title">Title</Label>
+                          <Input
+                            id="edit-title"
+                            value={editingTest.title}
+                            onChange={(e) => setEditingTest({...editingTest, title: e.target.value})}
+                            placeholder="Enter test title"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-description">Description</Label>
+                          <Textarea
+                            id="edit-description"
+                            value={editingTest.description || ""}
+                            onChange={(e) => setEditingTest({...editingTest, description: e.target.value})}
+                            placeholder="Enter test description"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="edit-subject">Subject</Label>
+                            <Select value={editingTest.subject_id || ""} onValueChange={(value) => setEditingTest({...editingTest, subject_id: value})}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select subject" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {upscSubjects.map((subject) => (
+                                  <SelectItem key={subject.id} value={subject.id}>
+                                    {subject.icon} {subject.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="edit-test_type">Test Type</Label>
+                            <Select value={editingTest.test_type} onValueChange={(value) => setEditingTest({...editingTest, test_type: value})}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="general">General</SelectItem>
+                                <SelectItem value="chapter">Chapter</SelectItem>
+                                <SelectItem value="full">Full Test</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        {editingTest.test_type === 'chapter' && (
+                          <div>
+                            <Label htmlFor="edit-chapter">Chapter Name</Label>
+                            <Input
+                              id="edit-chapter"
+                              value={editingTest.chapter_name || ""}
+                              onChange={(e) => setEditingTest({...editingTest, chapter_name: e.target.value})}
+                              placeholder="Enter chapter name"
+                            />
+                          </div>
+                        )}
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <Label htmlFor="edit-duration">Duration (min)</Label>
+                            <Input
+                              id="edit-duration"
+                              type="number"
+                              value={editingTest.duration}
+                              onChange={(e) => setEditingTest({...editingTest, duration: parseInt(e.target.value)})}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="edit-difficulty">Difficulty</Label>
+                            <Select value={editingTest.difficulty} onValueChange={(value) => setEditingTest({...editingTest, difficulty: value})}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Easy">Easy</SelectItem>
+                                <SelectItem value="Medium">Medium</SelectItem>
+                                <SelectItem value="Hard">Hard</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button onClick={handleEditTest}>
+                            <Save className="h-4 w-4 mr-2" />
+                            Save Changes
+                          </Button>
+                          <Button variant="outline" onClick={() => setEditingTest(null)}>
+                            <X className="h-4 w-4 mr-2" />
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
+
                 <div className="grid gap-4">
                   {testSeries.map((test) => (
                     <Card key={test.id}>
@@ -481,6 +665,13 @@ const Admin = () => {
                               onClick={() => setSelectedTestId(test.id)}
                             >
                               Manage Questions
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingTest(test)}
+                            >
+                              <Edit className="h-4 w-4" />
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -664,7 +855,15 @@ const Admin = () => {
                                 <CardTitle className="text-base">
                                   Q{index + 1}. {question.question_text}
                                 </CardTitle>
-                                <AlertDialog>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setEditingQuestion(question)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button
                                       variant="destructive"
@@ -690,7 +889,8 @@ const Admin = () => {
                                       </AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
-                                </AlertDialog>
+                                  </AlertDialog>
+                                </div>
                               </div>
                             </CardHeader>
                             <CardContent>
@@ -722,17 +922,121 @@ const Admin = () => {
                             </CardContent>
                           </Card>
                         ))}
-                      </div>
-                    )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Edit Question Dialog */}
+          <Dialog open={!!editingQuestion} onOpenChange={() => setEditingQuestion(null)}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Edit Question</DialogTitle>
+              </DialogHeader>
+              {editingQuestion && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="edit-question-text">Question Text</Label>
+                    <Textarea
+                      id="edit-question-text"
+                      value={editingQuestion.question_text}
+                      onChange={(e) => setEditingQuestion({...editingQuestion, question_text: e.target.value})}
+                      placeholder="Enter question text"
+                      rows={3}
+                    />
                   </div>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
+                  <div>
+                    <Label>Options</Label>
+                    <div className="space-y-2">
+                      {(editingQuestion.options as string[]).map((option, index) => (
+                        <Input
+                          key={index}
+                          value={option}
+                          onChange={(e) => {
+                            const newOptions = [...(editingQuestion.options as string[])];
+                            newOptions[index] = e.target.value;
+                            setEditingQuestion({...editingQuestion, options: newOptions});
+                          }}
+                          placeholder={`Option ${index + 1}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-correct-answer">Correct Answer</Label>
+                      <Select 
+                        value={editingQuestion.correct_answer} 
+                        onValueChange={(value) => setEditingQuestion({...editingQuestion, correct_answer: value})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select correct answer" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(editingQuestion.options as string[]).map((option, index) => (
+                            <SelectItem key={index} value={option}>
+                              {option || `Option ${index + 1}`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-question-difficulty">Difficulty</Label>
+                      <Select value={editingQuestion.difficulty} onValueChange={(value) => setEditingQuestion({...editingQuestion, difficulty: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Easy">Easy</SelectItem>
+                          <SelectItem value="Medium">Medium</SelectItem>
+                          <SelectItem value="Hard">Hard</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-topic">Topic (Optional)</Label>
+                      <Input
+                        id="edit-topic"
+                        value={editingQuestion.topic || ""}
+                        onChange={(e) => setEditingQuestion({...editingQuestion, topic: e.target.value})}
+                        placeholder="Enter topic"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-explanation">Explanation (Optional)</Label>
+                    <Textarea
+                      id="edit-explanation"
+                      value={editingQuestion.explanation || ""}
+                      onChange={(e) => setEditingQuestion({...editingQuestion, explanation: e.target.value})}
+                      placeholder="Enter explanation"
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleEditQuestion}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Changes
+                    </Button>
+                    <Button variant="outline" onClick={() => setEditingQuestion(null)}>
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
-      </div>
-    </>
-  );
+      </TabsContent>
+    </Tabs>
+  </div>
+</div>
+</>
+);
 };
 
 export default Admin;
