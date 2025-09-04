@@ -48,7 +48,7 @@ const StudyMaterials = () => {
         structuredData={structuredData}
       />
       
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16">
         <header className="border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60">
           <div className="container mx-auto px-4 py-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

@@ -4,11 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Clock, CheckCircle, XCircle, ArrowLeft, BookOpen } from "lucide-react";
+import { Clock, CheckCircle, XCircle, ArrowLeft, BookOpen, SkipForward, SkipBack } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
+import { QuestionNavigation } from "@/components/QuestionNavigation";
+import { User, Session } from "@supabase/supabase-js";
 
 interface Question {
   id: string;
@@ -29,19 +31,22 @@ interface UserAnswer {
 }
 
 const PolityTest = () => {
-  // abhi
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const chapterFilter = searchParams.get('chapter');
   
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
+  const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
   const [selectedAnswer, setSelectedAnswer] = useState<string>("");
   const [isTestCompleted, setIsTestCompleted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(chapterFilter ? 900 : 1800); // 15 mins for chapter, 30 for full test
   const [isLoading, setIsLoading] = useState(true);
   const [showResults, setShowResults] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   const getTestTitle = () => {
     if (chapterFilter) {
@@ -51,8 +56,31 @@ const PolityTest = () => {
   };
 
   useEffect(() => {
-    fetchQuestions();
+    checkAuthentication();
   }, []);
+
+  useEffect(() => {
+    if (authChecked && user) {
+      fetchQuestions();
+    }
+  }, [authChecked, user]);
+
+  const checkAuthentication = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setSession(session);
+    setUser(session?.user ?? null);
+    setAuthChecked(true);
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  };
 
   useEffect(() => {
     if (timeLeft > 0 && !isTestCompleted) {
@@ -112,22 +140,67 @@ const PolityTest = () => {
     setSelectedAnswer(answer);
   };
 
-  const handleNextQuestion = () => {
-    if (!selectedAnswer) {
-      toast.error('Please select an answer');
-      return;
+  const handleQuestionNavigation = (questionIndex: number) => {
+    // Save current answer if one is selected
+    if (selectedAnswer) {
+      saveCurrentAnswer();
     }
+    
+    setCurrentQuestionIndex(questionIndex);
+    
+    // Load saved answer for the selected question
+    const savedAnswer = userAnswers.find(answer => answer.questionId === questions[questionIndex]?.id);
+    setSelectedAnswer(savedAnswer?.answer || "");
+  };
+
+  const saveCurrentAnswer = () => {
+    if (!selectedAnswer) return;
 
     const currentQuestion = questions[currentQuestionIndex];
     const isCorrect = selectedAnswer === currentQuestion.correct_answer;
 
-    setUserAnswers([...userAnswers, {
+    // Remove any existing answer for this question
+    const filteredAnswers = userAnswers.filter(answer => answer.questionId !== currentQuestion.id);
+    
+    setUserAnswers([...filteredAnswers, {
       questionId: currentQuestion.id,
       answer: selectedAnswer,
       isCorrect,
       topic: currentQuestion.topic
     }]);
 
+    setAnsweredQuestions(prev => new Set([...prev, currentQuestionIndex]));
+  };
+
+  const handleSkipQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setSelectedAnswer("");
+    }
+  };
+
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      // Save current answer if one is selected
+      if (selectedAnswer) {
+        saveCurrentAnswer();
+      }
+      
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      
+      // Load saved answer for the previous question
+      const savedAnswer = userAnswers.find(answer => answer.questionId === questions[currentQuestionIndex - 1]?.id);
+      setSelectedAnswer(savedAnswer?.answer || "");
+    }
+  };
+
+  const handleNextQuestion = () => {
+    if (!selectedAnswer) {
+      toast.error('Please select an answer');
+      return;
+    }
+
+    saveCurrentAnswer();
     setSelectedAnswer("");
 
     if (currentQuestionIndex < questions.length - 1) {
@@ -138,25 +211,46 @@ const PolityTest = () => {
   };
 
   const handleTestSubmit = async () => {
+    // Save current answer if one is selected
+    if (selectedAnswer) {
+      saveCurrentAnswer();
+    }
+
     setIsTestCompleted(true);
-    const score = userAnswers.filter(answer => answer.isCorrect).length;
+    const finalAnswers = userAnswers;
+    if (selectedAnswer) {
+      const currentQuestion = questions[currentQuestionIndex];
+      const isCorrect = selectedAnswer === currentQuestion.correct_answer;
+      finalAnswers.push({
+        questionId: currentQuestion.id,
+        answer: selectedAnswer,
+        isCorrect,
+        topic: currentQuestion.topic
+      });
+    }
+
+    const score = finalAnswers.filter(answer => answer.isCorrect).length;
     const timeTaken = (chapterFilter ? 900 : 1800) - timeLeft;
 
     try {
-      // Note: This will require authentication to work properly
-      const { error } = await supabase
-        .from('test_attempts')
-        .insert({
-          test_name: getTestTitle(),
-          score,
-          total_questions: questions.length,
-          answers: JSON.stringify(userAnswers),
-          time_taken: timeTaken
-        });
+      if (user) {
+        const { error } = await supabase
+          .from('test_attempts')
+          .insert({
+            user_id: user.id,
+            test_name: getTestTitle(),
+            score,
+            total_questions: questions.length,
+            answers: JSON.stringify(finalAnswers),
+            time_taken: timeTaken
+          });
 
-      if (error) {
-        console.error('Error saving test attempt:', error);
-        toast.error('Failed to save test results');
+        if (error) {
+          console.error('Error saving test attempt:', error);
+          toast.error('Failed to save test results');
+        } else {
+          toast.success('Test results saved successfully!');
+        }
       }
     } catch (error) {
       console.error('Error saving test attempt:', error);
@@ -239,6 +333,34 @@ const PolityTest = () => {
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading test questions...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Authentication check
+  if (authChecked && !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6 text-center">
+            <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-primary font-bold text-lg">!</span>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Sign In Required</h3>
+            <p className="text-muted-foreground mb-4">
+              Please sign in to take the test and track your performance across sessions.
+            </p>
+            <div className="flex gap-2 justify-center">
+              <Button asChild>
+                <Link to="/auth">Sign In</Link>
+              </Button>
+              <Button variant="outline" onClick={() => navigate(chapterFilter ? `/study-materials/polity?chapter=${encodeURIComponent(chapterFilter)}` : '/test-series')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Go Back
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -455,57 +577,98 @@ const PolityTest = () => {
           </CardContent>
         </Card>
 
-        {/* Question */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded">
-                {currentQuestion.difficulty}
-              </span>
-              <span className="px-2 py-1 bg-secondary/10 text-secondary-foreground text-xs rounded">
-                {currentQuestion.topic}
-              </span>
-              <span className="px-2 py-1 bg-accent/10 text-accent-foreground text-xs rounded">
-                {currentQuestion.question_type === 'mcq' ? 'Multiple Choice' : 'True/False'}
-              </span>
-            </div>
-            <CardTitle className="text-lg leading-relaxed">
-              {currentQuestion.question_text}
-            </CardTitle>
-          </CardHeader>
-          
-          <CardContent>
-            <RadioGroup value={selectedAnswer} onValueChange={handleAnswerSelect}>
-              {currentQuestion.question_type === 'mcq' ? (
-                (Array.isArray(currentQuestion.options) ? currentQuestion.options : JSON.parse(currentQuestion.options || '[]')).map((option: string, index: number) => (
-                  <div key={index} className="flex items-center space-x-2 p-3 rounded-lg hover:bg-accent/50 cursor-pointer">
-                    <RadioGroupItem value={option} id={`option-${index}`} />
-                    <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
-                      {option}
-                    </Label>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Question Navigation */}
+          <div className="lg:col-span-1 order-2 lg:order-1">
+            <QuestionNavigation
+              totalQuestions={questions.length}
+              currentQuestion={currentQuestionIndex}
+              answeredQuestions={answeredQuestions}
+              onQuestionSelect={handleQuestionNavigation}
+              className="sticky top-4"
+            />
+          </div>
+
+          {/* Question */}
+          <div className="lg:col-span-3 order-1 lg:order-2">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded">
+                    {currentQuestion.difficulty}
+                  </span>
+                  <span className="px-2 py-1 bg-secondary/10 text-secondary-foreground text-xs rounded">
+                    {currentQuestion.topic}
+                  </span>
+                  <span className="px-2 py-1 bg-accent/10 text-accent-foreground text-xs rounded">
+                    {currentQuestion.question_type === 'mcq' ? 'Multiple Choice' : 'True/False'}
+                  </span>
+                </div>
+                <CardTitle className="text-lg leading-relaxed">
+                  {currentQuestion.question_text}
+                </CardTitle>
+              </CardHeader>
+              
+              <CardContent>
+                <RadioGroup value={selectedAnswer} onValueChange={handleAnswerSelect}>
+                  {currentQuestion.question_type === 'mcq' ? (
+                    (Array.isArray(currentQuestion.options) ? currentQuestion.options : JSON.parse(currentQuestion.options || '[]')).map((option: string, index: number) => (
+                      <div key={index} className="flex items-center space-x-2 p-3 rounded-lg hover:bg-accent/50 cursor-pointer">
+                        <RadioGroupItem value={option} id={`option-${index}`} />
+                        <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
+                          {option}
+                        </Label>
+                      </div>
+                    ))
+                  ) : (
+                    <>
+                      <div className="flex items-center space-x-2 p-3 rounded-lg hover:bg-accent/50 cursor-pointer">
+                        <RadioGroupItem value="true" id="true" />
+                        <Label htmlFor="true" className="flex-1 cursor-pointer">True</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 p-3 rounded-lg hover:bg-accent/50 cursor-pointer">
+                        <RadioGroupItem value="false" id="false" />
+                        <Label htmlFor="false" className="flex-1 cursor-pointer">False</Label>
+                      </div>
+                    </>
+                  )}
+                </RadioGroup>
+                
+                <div className="flex justify-between mt-6">
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={handlePreviousQuestion}
+                      disabled={currentQuestionIndex === 0}
+                    >
+                      <SkipBack className="h-4 w-4 mr-1" />
+                      Previous
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={handleSkipQuestion}
+                      disabled={currentQuestionIndex === questions.length - 1}
+                    >
+                      <SkipForward className="h-4 w-4 mr-1" />
+                      Skip
+                    </Button>
                   </div>
-                ))
-              ) : (
-                <>
-                  <div className="flex items-center space-x-2 p-3 rounded-lg hover:bg-accent/50 cursor-pointer">
-                    <RadioGroupItem value="true" id="true" />
-                    <Label htmlFor="true" className="flex-1 cursor-pointer">True</Label>
+                  
+                  <div className="flex gap-2">
+                    <Button onClick={handleNextQuestion} disabled={!selectedAnswer}>
+                      {currentQuestionIndex === questions.length - 1 ? 'Submit Test' : 'Next Question'}
+                    </Button>
+                    {currentQuestionIndex === questions.length - 1 && (
+                      <Button variant="destructive" onClick={handleTestSubmit}>
+                        Submit Test
+                      </Button>
+                    )}
                   </div>
-                  <div className="flex items-center space-x-2 p-3 rounded-lg hover:bg-accent/50 cursor-pointer">
-                    <RadioGroupItem value="false" id="false" />
-                    <Label htmlFor="false" className="flex-1 cursor-pointer">False</Label>
-                  </div>
-                </>
-              )}
-            </RadioGroup>
-            
-            <div className="flex justify-end mt-6">
-              <Button onClick={handleNextQuestion} disabled={!selectedAnswer}>
-                {currentQuestionIndex === questions.length - 1 ? 'Submit Test' : 'Next Question'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
