@@ -258,6 +258,69 @@ export type Database = {
         }
         Relationships: []
       }
+      user_bookmarks: {
+        Row: {
+          chapter_id: string
+          content: string
+          created_at: string
+          id: string
+          subject_id: string
+          user_id: string
+        }
+        Insert: {
+          chapter_id: string
+          content: string
+          created_at?: string
+          id?: string
+          subject_id: string
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          subject_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          chapter_id: string
+          created_at: string
+          id: string
+          is_completed: boolean
+          last_accessed_at: string
+          subject_id: string
+          topic_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chapter_id: string
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          last_accessed_at?: string
+          subject_id: string
+          topic_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          last_accessed_at?: string
+          subject_id?: string
+          topic_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       weak_sections: {
         Row: {
           accuracy_percentage: number

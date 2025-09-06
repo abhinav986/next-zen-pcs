@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Star, Lightbulb, Download, Bookmark, Play, CheckCircle, Menu, X, Languages, Table, Info, Target, TestTube } from "lucide-react";
+import { BookOpen, Star, Lightbulb, Download, Bookmark, Play, CheckCircle, Menu, X, Languages, Table, Info, Target, TestTube, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import jsPDF from "jspdf";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
 import { chapters } from "./constants";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSearchParams, Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 // ==================== ENRICHED UPSC CONTENT (same as before) ====================
 // ... keep the chapters object here ...
 
 const PolityBook = () => {
   const isMobile = useIsMobile();
+  const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedChapter, setSelectedChapter] = useState(
     searchParams.get('chapter') || "Chapter 1: Making of the Constitution"
@@ -23,6 +26,32 @@ const PolityBook = () => {
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [isHindi, setIsHindi] = useState(false);
+  const [userProgress, setUserProgress] = useState(new Map());
+  const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Load user progress and bookmarks when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadUserProgress();
+      loadUserBookmarks();
+    }
+  }, [isAuthenticated]);
 
   // Update URL when chapter changes
   useEffect(() => {
@@ -40,6 +69,172 @@ const PolityBook = () => {
       setSelectedChapter(chapterParam);
     }
   }, [searchParams]);
+
+  // Load user's reading progress
+  const loadUserProgress = async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('subject_id', 'polity');
+      
+      if (error) throw error;
+      
+      const progressMap = new Map();
+      const completedSet = new Set();
+      
+      data?.forEach(progress => {
+        progressMap.set(`${progress.chapter_id}-${progress.topic_id || 'chapter'}`, progress);
+        if (progress.is_completed) {
+          completedSet.add(progress.chapter_id);
+        }
+      });
+      
+      setUserProgress(progressMap);
+      setCompletedChapters(completedSet);
+    } catch (error) {
+      console.error('Error loading progress:', error);
+    }
+  };
+
+  // Load user's bookmarks
+  const loadUserBookmarks = async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_bookmarks')
+        .select('*')
+        .eq('subject_id', 'polity')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      setNotes(data?.map(bookmark => bookmark.content) || []);
+    } catch (error) {
+      console.error('Error loading bookmarks:', error);
+    }
+  };
+
+  // Save progress to backend
+  const saveProgress = async (chapterId, topicId, isCompleted = false) => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const { error } = await supabase
+        .from('user_progress')
+        .upsert({
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          subject_id: 'polity',
+          chapter_id: chapterId,
+          topic_id: topicId,
+          is_completed: isCompleted,
+          last_accessed_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,subject_id,chapter_id,topic_id'
+        });
+      
+      if (error) throw error;
+      
+      loadUserProgress();
+      toast({
+        title: isCompleted ? "Chapter completed!" : "Progress saved",
+        description: isCompleted ? "Well done! Keep up the great work." : "Your reading progress has been saved.",
+      });
+    } catch (error) {
+      console.error('Error saving progress:', error);
+    }
+  };
+
+  // Save bookmark to backend
+  const saveBookmark = async (content) => {
+    if (!isAuthenticated) {
+      // Fallback to localStorage for non-authenticated users
+      const localBookmarks = JSON.parse(localStorage.getItem('polity-bookmarks') || '[]');
+      if (!localBookmarks.includes(content)) {
+        const updatedBookmarks = [...localBookmarks, content];
+        localStorage.setItem('polity-bookmarks', JSON.stringify(updatedBookmarks));
+        setNotes(updatedBookmarks);
+      }
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('user_bookmarks')
+        .insert({
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          subject_id: 'polity',
+          chapter_id: selectedChapter,
+          content: content
+        });
+      
+      if (error) throw error;
+      
+      loadUserBookmarks();
+      toast({
+        title: "Bookmark saved",
+        description: "Added to your bookmarks successfully.",
+      });
+    } catch (error) {
+      console.error('Error saving bookmark:', error);
+    }
+  };
+
+  // Remove bookmark from backend
+  const removeBookmark = async (content, index) => {
+    if (!isAuthenticated) {
+      // Fallback to localStorage for non-authenticated users
+      const localBookmarks = JSON.parse(localStorage.getItem('polity-bookmarks') || '[]');
+      const updatedBookmarks = localBookmarks.filter((_, i) => i !== index);
+      localStorage.setItem('polity-bookmarks', JSON.stringify(updatedBookmarks));
+      setNotes(updatedBookmarks);
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('user_bookmarks')
+        .delete()
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('subject_id', 'polity')
+        .eq('content', content);
+      
+      if (error) throw error;
+      
+      loadUserBookmarks();
+    } catch (error) {
+      console.error('Error removing bookmark:', error);
+    }
+  };
+
+  // Load localStorage bookmarks for non-authenticated users
+  useEffect(() => {
+    if (!isAuthenticated) {
+      const localBookmarks = JSON.parse(localStorage.getItem('polity-bookmarks') || '[]');
+      setNotes(localBookmarks);
+    }
+  }, [isAuthenticated]);
+
+  // Get next chapter
+  const getNextChapter = () => {
+    const chapterKeys = Object.keys(chapters);
+    const currentIndex = chapterKeys.indexOf(selectedChapter);
+    return currentIndex < chapterKeys.length - 1 ? chapterKeys[currentIndex + 1] : null;
+  };
+
+  // Navigate to next chapter
+  const goToNextChapter = () => {
+    const nextChapter = getNextChapter();
+    if (nextChapter) {
+      markChapterComplete(selectedChapter);
+      setSelectedChapter(nextChapter);
+      setCurrentTopicIndex(0);
+      saveProgress(selectedChapter, null, true);
+    }
+  };
 
   // Auto-manage bookmark visibility on mobile when sidebar toggles
   const toggleSidebar = () => {
@@ -60,7 +255,7 @@ const PolityBook = () => {
 
   const addNote = (point) => {
     if (!notes.includes(point)) {
-      setNotes([...notes, point]);
+      saveBookmark(point);
     }
   };
 
@@ -69,7 +264,8 @@ const PolityBook = () => {
   };
 
   const removeNote = (index) => {
-    setNotes(notes.filter((_, i) => i !== index));
+    const content = notes[index];
+    removeBookmark(content, index);
   };
 
   // ✅ Export Notes to PDF
@@ -406,14 +602,14 @@ const PolityBook = () => {
           {chapters[selectedChapter].map((topic, idx) => (
             <Card key={idx} className={`mb-6 shadow-sm border-border hover:shadow-lg transition-all duration-200 group ${isMobile ? 'rounded-xl' : ''}`}>
               <CardContent className={isMobile ? "p-4" : "p-6"}>
-                <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold flex items-center gap-3 text-foreground mb-4 group-hover:text-primary transition-colors leading-tight`}>
+                <h1 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold flex items-center gap-3 text-foreground mb-4 group-hover:text-primary transition-colors leading-tight`}>
                   <div className={`flex-shrink-0 ${isMobile ? 'w-6 h-6' : 'w-8 h-8'} bg-primary/10 rounded-lg flex items-center justify-center`}>
                     <BookOpen className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-primary`} />
                   </div>
                   <span className="flex-1">
                     {isHindi ? (topic.headingHindi || topic.heading) : topic.heading}
                   </span>
-                </h2>
+                </h1>
                 {topic?.image && (
                   <div className="my-4">
                     <img
@@ -573,6 +769,46 @@ const PolityBook = () => {
               </CardContent>
             </Card>
           ))}
+          
+          {/* Next Section Navigation */}
+          <div className="mt-8 p-6 bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl border border-primary/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-foreground mb-2">
+                  {isHindi ? "अध्याय पूर्ण!" : "Chapter Complete!"}
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  {getNextChapter() 
+                    ? (isHindi ? "अगले अध्याय पर जाएं" : "Ready to move to the next chapter?")
+                    : (isHindi ? "बधाई हो! आपने सभी अध्याय पूरे कर लिए हैं।" : "Congratulations! You've completed all chapters.")
+                  }
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => markChapterComplete(selectedChapter)}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  disabled={completedChapters.has(selectedChapter)}
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  {completedChapters.has(selectedChapter) 
+                    ? (isHindi ? "पूर्ण" : "Completed") 
+                    : (isHindi ? "पूर्ण चिह्नित करें" : "Mark Complete")
+                  }
+                </Button>
+                {getNextChapter() && (
+                  <Button
+                    onClick={goToNextChapter}
+                    className="flex items-center gap-2"
+                  >
+                    {isHindi ? "अगला अध्याय" : "Next Chapter"}
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>

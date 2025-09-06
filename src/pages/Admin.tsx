@@ -14,6 +14,8 @@ import { SEOHead } from "@/components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
 import { upscSubjects } from "@/data/upscSubjects";
 import { useToast } from "@/hooks/use-toast";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 interface TestSeries {
   id: string;
@@ -34,7 +36,8 @@ interface TestQuestion {
   id: string;
   test_series_id?: string;
   question_text: string;
-  options: any; // Json type from Supabase
+  question_type?: string;
+  options: any;
   correct_answer: string;
   explanation?: string;
   difficulty: string;
@@ -68,6 +71,7 @@ const Admin = () => {
 
   const [newQuestion, setNewQuestion] = useState<Partial<TestQuestion>>({
     question_text: "",
+    question_type: "multiple_choice",
     options: ["", "", "", ""],
     correct_answer: "",
     explanation: "",
@@ -129,7 +133,6 @@ const Admin = () => {
 
   const handleAddTest = async () => {
     try {
-      // Ensure required fields are set
       const testData = {
         ...newTest,
         title: newTest.title || "",
@@ -188,7 +191,8 @@ const Admin = () => {
       const questionData = {
         test_series_id: selectedTestId,
         question_text: newQuestion.question_text || "",
-        options: newQuestion.options || ["", "", "", ""],
+        question_type: newQuestion.question_type || "multiple_choice",
+        options: newQuestion.question_type === "true_false" ? ["True", "False"] : (newQuestion.options || ["", "", "", ""]),
         correct_answer: newQuestion.correct_answer || "",
         explanation: newQuestion.explanation,
         difficulty: newQuestion.difficulty || "Medium",
@@ -207,6 +211,7 @@ const Admin = () => {
       setQuestions([...questions, data]);
       setNewQuestion({
         question_text: "",
+        question_type: "multiple_choice",
         options: ["", "", "", ""],
         correct_answer: "",
         explanation: "",
@@ -216,7 +221,6 @@ const Admin = () => {
       });
       setIsAddingQuestion(false);
       
-      // Update test series total questions
       await updateTestQuestionCount(selectedTestId, questions.length + 1);
       
       toast({
@@ -239,13 +243,12 @@ const Admin = () => {
         .from('test_series')
         .update({ 
           total_questions: count,
-          max_score: count * 2 // Assuming 2 marks per question
+          max_score: count * 2
         })
         .eq('id', testId);
 
       if (error) throw error;
       
-      // Update local state
       setTestSeries(testSeries.map(test => 
         test.id === testId 
           ? { ...test, total_questions: count, max_score: count * 2 }
@@ -360,6 +363,7 @@ const Admin = () => {
         .from('test_questions')
         .update({
           question_text: editingQuestion.question_text,
+          question_type: editingQuestion.question_type,
           options: editingQuestion.options,
           correct_answer: editingQuestion.correct_answer,
           explanation: editingQuestion.explanation,
@@ -423,7 +427,6 @@ const Admin = () => {
               <TabsTrigger value="questions">Questions</TabsTrigger>
             </TabsList>
 
-            {/* Test Series Management */}
             <TabsContent value="tests">
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -458,7 +461,7 @@ const Admin = () => {
                             placeholder="Enter test description"
                           />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <Label htmlFor="subject">Subject</Label>
                             <Select value={newTest.subject_id} onValueChange={(value) => setNewTest({...newTest, subject_id: value})}>
@@ -488,18 +491,7 @@ const Admin = () => {
                             </Select>
                           </div>
                         </div>
-                        {newTest.test_type === 'chapter' && (
-                          <div>
-                            <Label htmlFor="chapter">Chapter Name</Label>
-                            <Input
-                              id="chapter"
-                              value={newTest.chapter_name}
-                              onChange={(e) => setNewTest({...newTest, chapter_name: e.target.value})}
-                              placeholder="Enter chapter name"
-                            />
-                          </div>
-                        )}
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <Label htmlFor="duration">Duration (min)</Label>
                             <Input
@@ -538,112 +530,6 @@ const Admin = () => {
                   </Dialog>
                 </div>
 
-                {/* Edit Test Dialog */}
-                <Dialog open={!!editingTest} onOpenChange={() => setEditingTest(null)}>
-                  <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                      <DialogTitle>Edit Test Series</DialogTitle>
-                    </DialogHeader>
-                    {editingTest && (
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="edit-title">Title</Label>
-                          <Input
-                            id="edit-title"
-                            value={editingTest.title}
-                            onChange={(e) => setEditingTest({...editingTest, title: e.target.value})}
-                            placeholder="Enter test title"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="edit-description">Description</Label>
-                          <Textarea
-                            id="edit-description"
-                            value={editingTest.description || ""}
-                            onChange={(e) => setEditingTest({...editingTest, description: e.target.value})}
-                            placeholder="Enter test description"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="edit-subject">Subject</Label>
-                            <Select value={editingTest.subject_id || ""} onValueChange={(value) => setEditingTest({...editingTest, subject_id: value})}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select subject" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {upscSubjects.map((subject) => (
-                                  <SelectItem key={subject.id} value={subject.id}>
-                                    {subject.icon} {subject.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label htmlFor="edit-test_type">Test Type</Label>
-                            <Select value={editingTest.test_type} onValueChange={(value) => setEditingTest({...editingTest, test_type: value})}>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="general">General</SelectItem>
-                                <SelectItem value="chapter">Chapter</SelectItem>
-                                <SelectItem value="full">Full Test</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        {editingTest.test_type === 'chapter' && (
-                          <div>
-                            <Label htmlFor="edit-chapter">Chapter Name</Label>
-                            <Input
-                              id="edit-chapter"
-                              value={editingTest.chapter_name || ""}
-                              onChange={(e) => setEditingTest({...editingTest, chapter_name: e.target.value})}
-                              placeholder="Enter chapter name"
-                            />
-                          </div>
-                        )}
-                        <div className="grid grid-cols-3 gap-4">
-                          <div>
-                            <Label htmlFor="edit-duration">Duration (min)</Label>
-                            <Input
-                              id="edit-duration"
-                              type="number"
-                              value={editingTest.duration}
-                              onChange={(e) => setEditingTest({...editingTest, duration: parseInt(e.target.value)})}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="edit-difficulty">Difficulty</Label>
-                            <Select value={editingTest.difficulty} onValueChange={(value) => setEditingTest({...editingTest, difficulty: value})}>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Easy">Easy</SelectItem>
-                                <SelectItem value="Medium">Medium</SelectItem>
-                                <SelectItem value="Hard">Hard</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button onClick={handleEditTest}>
-                            <Save className="h-4 w-4 mr-2" />
-                            Save Changes
-                          </Button>
-                          <Button variant="outline" onClick={() => setEditingTest(null)}>
-                            <X className="h-4 w-4 mr-2" />
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </DialogContent>
-                </Dialog>
-
                 <div className="grid gap-4">
                   {testSeries.map((test) => (
                     <Card key={test.id}>
@@ -675,10 +561,7 @@ const Admin = () => {
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                >
+                                <Button variant="destructive" size="sm">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </AlertDialogTrigger>
@@ -686,15 +569,12 @@ const Admin = () => {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Delete Test Series</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Are you sure you want to delete "{test.title}"? This will also delete all questions associated with this test series. This action cannot be undone.
+                                    Are you sure you want to delete "{test.title}"?
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => deleteTest(test.id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
+                                  <AlertDialogAction onClick={() => deleteTest(test.id)}>
                                     Delete
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
@@ -731,14 +611,13 @@ const Admin = () => {
               </div>
             </TabsContent>
 
-            {/* Questions Management */}
             <TabsContent value="questions">
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <h2 className="text-2xl font-semibold">Questions</h2>
-                  <div className="flex gap-4">
+                  <div className="flex flex-col sm:flex-row gap-4">
                     <Select value={selectedTestId} onValueChange={setSelectedTestId}>
-                      <SelectTrigger className="w-64">
+                      <SelectTrigger className="w-full sm:w-64">
                         <SelectValue placeholder="Select test series" />
                       </SelectTrigger>
                       <SelectContent>
@@ -756,50 +635,114 @@ const Admin = () => {
                           Add Question
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-3xl">
+                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle>Add New Question</DialogTitle>
                         </DialogHeader>
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                           <div>
-                            <Label htmlFor="question_text">Question</Label>
-                            <Textarea
-                              id="question_text"
-                              value={newQuestion.question_text}
-                              onChange={(e) => setNewQuestion({...newQuestion, question_text: e.target.value})}
-                              placeholder="Enter question text"
-                              rows={3}
-                            />
+                            <Label>Question Type</Label>
+                            <Select 
+                              value={newQuestion.question_type} 
+                              onValueChange={(value) => {
+                                const resetOptions = value === "true_false" ? ["True", "False"] : ["", "", "", ""];
+                                setNewQuestion({...newQuestion, question_type: value, options: resetOptions, correct_answer: ""});
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                                <SelectItem value="true_false">True/False</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
+                          
                           <div>
-                            <Label>Options</Label>
-                            <div className="space-y-2">
-                              {newQuestion.options?.map((option, index) => (
-                                <Input
-                                  key={index}
-                                  value={option}
-                                  onChange={(e) => {
-                                    const updatedOptions = [...(newQuestion.options || [])];
-                                    updatedOptions[index] = e.target.value;
-                                    setNewQuestion({...newQuestion, options: updatedOptions});
-                                  }}
-                                  placeholder={`Option ${index + 1}`}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor="correct_answer">Correct Answer</Label>
-                              <Input
-                                id="correct_answer"
-                                value={newQuestion.correct_answer}
-                                onChange={(e) => setNewQuestion({...newQuestion, correct_answer: e.target.value})}
-                                placeholder="Enter correct answer"
+                            <Label>Question</Label>
+                            <div className="border rounded-md">
+                              <ReactQuill
+                                value={newQuestion.question_text}
+                                onChange={(value) => setNewQuestion({...newQuestion, question_text: value})}
+                                placeholder="Enter question text"
+                                modules={{
+                                  toolbar: [
+                                    [{ 'header': [1, 2, 3, false] }],
+                                    ['bold', 'italic', 'underline'],
+                                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                    ['clean']
+                                  ]
+                                }}
+                                style={{ minHeight: '120px' }}
                               />
                             </div>
+                          </div>
+                          
+                          {newQuestion.question_type === "multiple_choice" ? (
                             <div>
-                              <Label htmlFor="difficulty">Difficulty</Label>
+                              <Label>Options</Label>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {newQuestion.options?.map((option, index) => (
+                                  <Input
+                                    key={index}
+                                    value={option}
+                                    onChange={(e) => {
+                                      const updatedOptions = [...(newQuestion.options || [])];
+                                      updatedOptions[index] = e.target.value;
+                                      setNewQuestion({...newQuestion, options: updatedOptions});
+                                    }}
+                                    placeholder={`Option ${String.fromCharCode(65 + index)}`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <Label>Options (True/False)</Label>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="p-3 border rounded-md bg-muted/50 text-center">True</div>
+                                <div className="p-3 border rounded-md bg-muted/50 text-center">False</div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label>Correct Answer</Label>
+                              {newQuestion.question_type === "true_false" ? (
+                                <Select 
+                                  value={newQuestion.correct_answer} 
+                                  onValueChange={(value) => setNewQuestion({...newQuestion, correct_answer: value})}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select correct answer" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="True">True</SelectItem>
+                                    <SelectItem value="False">False</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              ) : (
+                                <Select 
+                                  value={newQuestion.correct_answer} 
+                                  onValueChange={(value) => setNewQuestion({...newQuestion, correct_answer: value})}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select correct answer" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {newQuestion.options?.filter(opt => opt.trim()).map((option, index) => (
+                                      <SelectItem key={index} value={option}>
+                                        {String.fromCharCode(65 + index)}. {option}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </div>
+                            <div>
+                              <Label>Difficulty</Label>
                               <Select value={newQuestion.difficulty} onValueChange={(value) => setNewQuestion({...newQuestion, difficulty: value})}>
                                 <SelectTrigger>
                                   <SelectValue />
@@ -812,26 +755,36 @@ const Admin = () => {
                               </Select>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor="topic">Topic (Optional)</Label>
-                              <Input
-                                id="topic"
-                                value={newQuestion.topic || ""}
-                                onChange={(e) => setNewQuestion({...newQuestion, topic: e.target.value})}
-                                placeholder="Enter topic"
+                          
+                          <div>
+                            <Label>Topic (Optional)</Label>
+                            <Input
+                              value={newQuestion.topic || ""}
+                              onChange={(e) => setNewQuestion({...newQuestion, topic: e.target.value})}
+                              placeholder="Enter topic"
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label>Explanation (Optional)</Label>
+                            <div className="border rounded-md">
+                              <ReactQuill
+                                value={newQuestion.explanation || ""}
+                                onChange={(value) => setNewQuestion({...newQuestion, explanation: value})}
+                                placeholder="Enter explanation for the answer"
+                                modules={{
+                                  toolbar: [
+                                    [{ 'header': [1, 2, 3, false] }],
+                                    ['bold', 'italic', 'underline'],
+                                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                    ['clean']
+                                  ]
+                                }}
+                                style={{ minHeight: '100px' }}
                               />
                             </div>
                           </div>
-                          <div>
-                            <Label htmlFor="explanation">Explanation (Optional)</Label>
-                            <Textarea
-                              id="explanation"
-                              value={newQuestion.explanation}
-                              onChange={(e) => setNewQuestion({...newQuestion, explanation: e.target.value})}
-                              placeholder="Enter explanation for the answer"
-                            />
-                          </div>
+                          
                           <div className="flex gap-2">
                             <Button onClick={handleAddQuestion}>
                               <Save className="h-4 w-4 mr-2" />
@@ -864,7 +817,16 @@ const Admin = () => {
                             <CardHeader>
                               <div className="flex items-start justify-between">
                                 <CardTitle className="text-base">
-                                  Q{index + 1}. {question.question_text}
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span>Q{index + 1}.</span>
+                                    <Badge variant="outline" className="text-xs">
+                                      {question.question_type === "true_false" ? "T/F" : "MCQ"}
+                                    </Badge>
+                                  </div>
+                                  <div 
+                                    className="prose prose-sm max-w-none" 
+                                    dangerouslySetInnerHTML={{ __html: question.question_text }}
+                                  />
                                 </CardTitle>
                                 <div className="flex gap-2">
                                   <Button
@@ -875,38 +837,32 @@ const Admin = () => {
                                     <Edit className="h-4 w-4" />
                                   </Button>
                                   <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="destructive"
-                                      size="sm"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Delete Question</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Are you sure you want to delete this question? This action cannot be undone.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => deleteQuestion(question.id)}
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                      >
-                                        Delete
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="destructive" size="sm">
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete Question</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Are you sure you want to delete this question?
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => deleteQuestion(question.id)}>
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
                                   </AlertDialog>
                                 </div>
                               </div>
                             </CardHeader>
                             <CardContent>
                               <div className="space-y-2">
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                   {Array.isArray(question.options) ? question.options.map((option, optIndex) => (
                                     <div
                                       key={optIndex}
@@ -922,7 +878,11 @@ const Admin = () => {
                                 </div>
                                 {question.explanation && (
                                   <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
-                                    <strong>Explanation:</strong> {question.explanation}
+                                    <strong>Explanation:</strong>
+                                    <div 
+                                      className="prose prose-sm max-w-none mt-2" 
+                                      dangerouslySetInnerHTML={{ __html: question.explanation }}
+                                    />
                                   </div>
                                 )}
                                 <div className="flex gap-2 text-sm text-muted-foreground">
@@ -933,123 +893,187 @@ const Admin = () => {
                             </CardContent>
                           </Card>
                         ))}
-                </div>
-              )}
-            </div>
-          )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-          {/* Edit Question Dialog */}
-          <Dialog open={!!editingQuestion} onOpenChange={() => setEditingQuestion(null)}>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Edit Question</DialogTitle>
-              </DialogHeader>
-              {editingQuestion && (
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="edit-question-text">Question Text</Label>
-                    <Textarea
-                      id="edit-question-text"
-                      value={editingQuestion.question_text}
-                      onChange={(e) => setEditingQuestion({...editingQuestion, question_text: e.target.value})}
-                      placeholder="Enter question text"
-                      rows={3}
-                    />
-                  </div>
-                  <div>
-                    <Label>Options</Label>
-                    <div className="space-y-2">
-                      {(editingQuestion.options as string[]).map((option, index) => (
-                        <Input
-                          key={index}
-                          value={option}
-                          onChange={(e) => {
-                            const newOptions = [...(editingQuestion.options as string[])];
-                            newOptions[index] = e.target.value;
-                            setEditingQuestion({...editingQuestion, options: newOptions});
-                          }}
-                          placeholder={`Option ${index + 1}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="edit-correct-answer">Correct Answer</Label>
-                      <Select 
-                        value={editingQuestion.correct_answer} 
-                        onValueChange={(value) => setEditingQuestion({...editingQuestion, correct_answer: value})}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select correct answer" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(editingQuestion.options as string[])
-                            .filter(option => option && option.trim() !== '')
-                            .map((option, index) => (
-                            <SelectItem key={index} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-question-difficulty">Difficulty</Label>
-                      <Select value={editingQuestion.difficulty} onValueChange={(value) => setEditingQuestion({...editingQuestion, difficulty: value})}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Easy">Easy</SelectItem>
-                          <SelectItem value="Medium">Medium</SelectItem>
-                          <SelectItem value="Hard">Hard</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="edit-topic">Topic (Optional)</Label>
-                      <Input
-                        id="edit-topic"
-                        value={editingQuestion.topic || ""}
-                        onChange={(e) => setEditingQuestion({...editingQuestion, topic: e.target.value})}
-                        placeholder="Enter topic"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-explanation">Explanation (Optional)</Label>
-                    <Textarea
-                      id="edit-explanation"
-                      value={editingQuestion.explanation || ""}
-                      onChange={(e) => setEditingQuestion({...editingQuestion, explanation: e.target.value})}
-                      placeholder="Enter explanation"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button onClick={handleEditQuestion}>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
-                    </Button>
-                    <Button variant="outline" onClick={() => setEditingQuestion(null)}>
-                      <X className="h-4 w-4 mr-2" />
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
+                {/* Edit Question Dialog */}
+                <Dialog open={!!editingQuestion} onOpenChange={() => setEditingQuestion(null)}>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Edit Question</DialogTitle>
+                    </DialogHeader>
+                    {editingQuestion && (
+                      <div className="space-y-6">
+                        <div>
+                          <Label>Question Type</Label>
+                          <Select 
+                            value={editingQuestion.question_type || "multiple_choice"} 
+                            onValueChange={(value) => {
+                              const resetOptions = value === "true_false" ? ["True", "False"] : (editingQuestion.options as string[]);
+                              setEditingQuestion({...editingQuestion, question_type: value, options: resetOptions, correct_answer: ""});
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                              <SelectItem value="true_false">True/False</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div>
+                          <Label>Question</Label>
+                          <div className="border rounded-md">
+                            <ReactQuill
+                              value={editingQuestion.question_text}
+                              onChange={(value) => setEditingQuestion({...editingQuestion, question_text: value})}
+                              placeholder="Enter question text"
+                              modules={{
+                                toolbar: [
+                                  [{ 'header': [1, 2, 3, false] }],
+                                  ['bold', 'italic', 'underline'],
+                                  [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                  ['clean']
+                                ]
+                              }}
+                              style={{ minHeight: '120px' }}
+                            />
+                          </div>
+                        </div>
+                        
+                        {(editingQuestion.question_type || "multiple_choice") === "multiple_choice" ? (
+                          <div>
+                            <Label>Options</Label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {(editingQuestion.options as string[]).map((option, index) => (
+                                <Input
+                                  key={index}
+                                  value={option}
+                                  onChange={(e) => {
+                                    const newOptions = [...(editingQuestion.options as string[])];
+                                    newOptions[index] = e.target.value;
+                                    setEditingQuestion({...editingQuestion, options: newOptions});
+                                  }}
+                                  placeholder={`Option ${String.fromCharCode(65 + index)}`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <Label>Options (True/False)</Label>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="p-3 border rounded-md bg-muted/50 text-center">True</div>
+                              <div className="p-3 border rounded-md bg-muted/50 text-center">False</div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label>Correct Answer</Label>
+                            {(editingQuestion.question_type || "multiple_choice") === "true_false" ? (
+                              <Select 
+                                value={editingQuestion.correct_answer} 
+                                onValueChange={(value) => setEditingQuestion({...editingQuestion, correct_answer: value})}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select correct answer" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="True">True</SelectItem>
+                                  <SelectItem value="False">False</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Select 
+                                value={editingQuestion.correct_answer} 
+                                onValueChange={(value) => setEditingQuestion({...editingQuestion, correct_answer: value})}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select correct answer" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {(editingQuestion.options as string[])
+                                    .filter(option => option && option.trim() !== '')
+                                    .map((option, index) => (
+                                    <SelectItem key={index} value={option}>
+                                      {String.fromCharCode(65 + index)}. {option}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </div>
+                          <div>
+                            <Label>Difficulty</Label>
+                            <Select value={editingQuestion.difficulty} onValueChange={(value) => setEditingQuestion({...editingQuestion, difficulty: value})}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Easy">Easy</SelectItem>
+                                <SelectItem value="Medium">Medium</SelectItem>
+                                <SelectItem value="Hard">Hard</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <Label>Topic (Optional)</Label>
+                          <Input
+                            value={editingQuestion.topic || ""}
+                            onChange={(e) => setEditingQuestion({...editingQuestion, topic: e.target.value})}
+                            placeholder="Enter topic"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label>Explanation (Optional)</Label>
+                          <div className="border rounded-md">
+                            <ReactQuill
+                              value={editingQuestion.explanation || ""}
+                              onChange={(value) => setEditingQuestion({...editingQuestion, explanation: value})}
+                              placeholder="Enter explanation for the answer"
+                              modules={{
+                                toolbar: [
+                                  [{ 'header': [1, 2, 3, false] }],
+                                  ['bold', 'italic', 'underline'],
+                                  [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                  ['clean']
+                                ]
+                              }}
+                              style={{ minHeight: '100px' }}
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <Button onClick={handleEditQuestion}>
+                            <Save className="h-4 w-4 mr-2" />
+                            Save Changes
+                          </Button>
+                          <Button variant="outline" onClick={() => setEditingQuestion(null)}>
+                            <X className="h-4 w-4 mr-2" />
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
-      </TabsContent>
-    </Tabs>
-  </div>
-</div>
-</>
-);
+      </div>
+    </>
+  );
 };
 
 export default Admin;

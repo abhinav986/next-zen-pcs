@@ -5,8 +5,81 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Target, Trophy, Calendar, TrendingUp, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const Dashboard = () => {
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+  }, []);
+
+  // Fetch test attempts data
+  const { data: testAttempts } = useQuery({
+    queryKey: ['test-attempts', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('test_attempts')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('completed_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  // Fetch user progress data
+  const { data: userProgress } = useQuery({
+    queryKey: ['user-progress', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  // Calculate statistics
+  const totalTests = testAttempts?.length || 0;
+  const avgScore = testAttempts?.length 
+    ? Math.round(testAttempts.reduce((sum, test) => sum + (test.score / test.total_questions * 100), 0) / testAttempts.length * 10) / 10
+    : 0;
+  
+  // Calculate study streak (days with progress activity)
+  const recentProgressDays = userProgress?.filter(p => {
+    const daysDiff = Math.floor((new Date().getTime() - new Date(p.last_accessed_at).getTime()) / (1000 * 60 * 60 * 24));
+    return daysDiff <= 30;
+  }).length || 0;
+
+  // Calculate subject-wise progress
+  const subjectProgress = userProgress?.reduce((acc, progress) => {
+    if (!acc[progress.subject_id]) {
+      acc[progress.subject_id] = { total: 0, completed: 0 };
+    }
+    acc[progress.subject_id].total++;
+    if (progress.is_completed) {
+      acc[progress.subject_id].completed++;
+    }
+    return acc;
+  }, {} as Record<string, { total: number; completed: number }>) || {};
+
+  // Calculate total study time from test attempts
+  const totalStudyTime = testAttempts?.reduce((sum, test) => sum + (test.time_taken || 0), 0) || 0;
+  const studyHours = Math.floor(totalStudyTime / 3600);
+  const studyMinutes = Math.floor((totalStudyTime % 3600) / 60);
+
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
@@ -63,8 +136,14 @@ const Dashboard = () => {
                 <Target className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">12</div>
-                <p className="text-xs text-muted-foreground">+2 from last week</p>
+                <div className="text-2xl font-bold">{totalTests}</div>
+                <p className="text-xs text-muted-foreground">
+                  {testAttempts?.filter(t => {
+                    const weekAgo = new Date();
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    return new Date(t.completed_at) > weekAgo;
+                  }).length || 0} from last week
+                </p>
               </CardContent>
             </Card>
             
@@ -74,8 +153,10 @@ const Dashboard = () => {
                 <Trophy className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">78.5%</div>
-                <p className="text-xs text-muted-foreground">+5.2% from last month</p>
+                <div className="text-2xl font-bold">{avgScore}%</div>
+                <p className="text-xs text-muted-foreground">
+                  {totalTests > 1 ? 'Based on test attempts' : 'Take more tests for trends'}
+                </p>
               </CardContent>
             </Card>
             
@@ -85,8 +166,8 @@ const Dashboard = () => {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">15 days</div>
-                <p className="text-xs text-muted-foreground">Keep it up!</p>
+                <div className="text-2xl font-bold">{recentProgressDays} topics</div>
+                <p className="text-xs text-muted-foreground">Studied this month</p>
               </CardContent>
             </Card>
             
@@ -96,8 +177,8 @@ const Dashboard = () => {
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">45h 30m</div>
-                <p className="text-xs text-muted-foreground">This month</p>
+                <div className="text-2xl font-bold">{studyHours}h {studyMinutes}m</div>
+                <p className="text-xs text-muted-foreground">Total test time</p>
               </CardContent>
             </Card>
           </section>
@@ -113,34 +194,24 @@ const Dashboard = () => {
                 <CardDescription>Your completion rate across different subjects</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Indian Polity</span>
-                    <span>85%</span>
-                  </div>
-                  <Progress value={85} className="h-2" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>History</span>
-                    <span>72%</span>
-                  </div>
-                  <Progress value={72} className="h-2" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Geography</span>
-                    <span>65%</span>
-                  </div>
-                  <Progress value={65} className="h-2" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Economics</span>
-                    <span>58%</span>
-                  </div>
-                  <Progress value={58} className="h-2" />
-                </div>
+                {Object.keys(subjectProgress).length > 0 ? (
+                  Object.entries(subjectProgress).map(([subjectId, progress]) => {
+                    const percentage = Math.round((progress.completed / progress.total) * 100);
+                    const subjectName = subjectId === 'polity' ? 'Indian Polity' : 
+                                       subjectId.charAt(0).toUpperCase() + subjectId.slice(1);
+                    return (
+                      <div key={subjectId} className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>{subjectName}</span>
+                          <span>{percentage}%</span>
+                        </div>
+                        <Progress value={percentage} className="h-2" />
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-muted-foreground text-sm">Start studying to see your progress here</p>
+                )}
               </CardContent>
             </Card>
 
@@ -150,36 +221,46 @@ const Dashboard = () => {
                 <CardDescription>Your latest study sessions and test attempts</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Target className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Completed Polity Mock Test</p>
-                    <p className="text-xs text-muted-foreground">Score: 82% • 2 hours ago</p>
-                  </div>
-                  <Badge variant="secondary">New</Badge>
-                </div>
+                {testAttempts && testAttempts.length > 0 ? (
+                  testAttempts.slice(0, 3).map((attempt, index) => {
+                    const score = Math.round((attempt.score / attempt.total_questions) * 100);
+                    const timeAgo = new Date(attempt.completed_at);
+                    const now = new Date();
+                    const diffHours = Math.floor((now.getTime() - timeAgo.getTime()) / (1000 * 60 * 60));
+                    const timeText = diffHours < 1 ? 'Just now' : 
+                                    diffHours < 24 ? `${diffHours}h ago` : 
+                                    `${Math.floor(diffHours / 24)}d ago`;
+                    
+                    return (
+                      <div key={attempt.id} className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Target className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Completed {attempt.test_name}</p>
+                          <p className="text-xs text-muted-foreground">Score: {score}% • {timeText}</p>
+                        </div>
+                        {index === 0 && <Badge variant="secondary">Latest</Badge>}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-muted-foreground text-sm">No recent activity. Take a test to get started!</p>
+                )}
                 
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-secondary/50 flex items-center justify-center">
-                    <BookOpen className="h-4 w-4 text-secondary-foreground" />
+                {userProgress && userProgress.length > 0 && (
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-secondary/50 flex items-center justify-center">
+                      <BookOpen className="h-4 w-4 text-secondary-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Study Progress Updated</p>
+                      <p className="text-xs text-muted-foreground">
+                        {userProgress.filter(p => p.is_completed).length} topics completed
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Studied Indian History Chapter 5</p>
-                    <p className="text-xs text-muted-foreground">45 minutes • Yesterday</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-secondary/50 flex items-center justify-center">
-                    <Target className="h-4 w-4 text-secondary-foreground" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Geography Quiz Attempt</p>
-                    <p className="text-xs text-muted-foreground">Score: 75% • 2 days ago</p>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </section>
