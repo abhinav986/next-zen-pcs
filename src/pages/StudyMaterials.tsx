@@ -15,6 +15,8 @@ const StudyMaterials = () => {
   const handleViewNotes = (subjectId: string) => {
     if (subjectId === 'polity') {
       navigate('/study-materials/polity');
+    } else if (subjectId === 'ancient-history') {
+      navigate('/study-materials/ancient-history');
     } else {
       // For other subjects, show coming soon or implement similar
       alert(`${subjectId} notes coming soon!`);

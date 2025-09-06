@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import TestSeries from "./pages/TestSeries";
 import StudyMaterials from "./pages/StudyMaterials";
 import PolityApp from "./components/study-material/polity/PolityApp";
+import AncientHistoryStudy from "./pages/AncientHistoryStudy";
 import PolityTest from "./pages/PolityTest";
 import SubjectTest from "./pages/SubjectTest";
 import Admin from "./pages/Admin";
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/polity-test" element={<PolityTest />} />
             <Route path="/study-materials" element={<StudyMaterials />} />
             <Route path="/study-materials/polity" element={<PolityApp />} />
+            <Route path="/study-materials/ancient-history" element={<AncientHistoryStudy />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

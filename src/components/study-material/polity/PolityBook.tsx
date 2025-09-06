@@ -5,7 +5,7 @@ import { BookOpen, Star, Lightbulb, Download, Bookmark, Play, CheckCircle, Menu,
 import jsPDF from "jspdf";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
-import { chapters } from "./constants";
+import { chapters as defaultChapters } from "./constants";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 // ==================== ENRICHED UPSC CONTENT (same as before) ====================
 // ... keep the chapters object here ...
 
-const PolityBook = () => {
+const PolityBook = ({ chapters = defaultChapters, subjectId = 'polity' }) => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -78,7 +78,7 @@ const PolityBook = () => {
       const { data, error } = await supabase
         .from('user_progress')
         .select('*')
-        .eq('subject_id', 'polity');
+        .eq('subject_id', subjectId);
       
       if (error) throw error;
       
@@ -107,7 +107,7 @@ const PolityBook = () => {
       const { data, error } = await supabase
         .from('user_bookmarks')
         .select('*')
-        .eq('subject_id', 'polity')
+        .eq('subject_id', subjectId)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -127,7 +127,7 @@ const PolityBook = () => {
         .from('user_progress')
         .upsert({
           user_id: (await supabase.auth.getUser()).data.user?.id,
-          subject_id: 'polity',
+          subject_id: subjectId,
           chapter_id: chapterId,
           topic_id: topicId,
           is_completed: isCompleted,
@@ -152,10 +152,10 @@ const PolityBook = () => {
   const saveBookmark = async (content) => {
     if (!isAuthenticated) {
       // Fallback to localStorage for non-authenticated users
-      const localBookmarks = JSON.parse(localStorage.getItem('polity-bookmarks') || '[]');
+      const localBookmarks = JSON.parse(localStorage.getItem(`${subjectId}-bookmarks`) || '[]');
       if (!localBookmarks.includes(content)) {
         const updatedBookmarks = [...localBookmarks, content];
-        localStorage.setItem('polity-bookmarks', JSON.stringify(updatedBookmarks));
+        localStorage.setItem(`${subjectId}-bookmarks`, JSON.stringify(updatedBookmarks));
         setNotes(updatedBookmarks);
       }
       return;
@@ -166,7 +166,7 @@ const PolityBook = () => {
         .from('user_bookmarks')
         .insert({
           user_id: (await supabase.auth.getUser()).data.user?.id,
-          subject_id: 'polity',
+          subject_id: subjectId,
           chapter_id: selectedChapter,
           content: content
         });
@@ -187,9 +187,9 @@ const PolityBook = () => {
   const removeBookmark = async (content, index) => {
     if (!isAuthenticated) {
       // Fallback to localStorage for non-authenticated users
-      const localBookmarks = JSON.parse(localStorage.getItem('polity-bookmarks') || '[]');
+      const localBookmarks = JSON.parse(localStorage.getItem(`${subjectId}-bookmarks`) || '[]');
       const updatedBookmarks = localBookmarks.filter((_, i) => i !== index);
-      localStorage.setItem('polity-bookmarks', JSON.stringify(updatedBookmarks));
+      localStorage.setItem(`${subjectId}-bookmarks`, JSON.stringify(updatedBookmarks));
       setNotes(updatedBookmarks);
       return;
     }
@@ -199,7 +199,7 @@ const PolityBook = () => {
         .from('user_bookmarks')
         .delete()
         .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .eq('subject_id', 'polity')
+        .eq('subject_id', subjectId)
         .eq('content', content);
       
       if (error) throw error;
@@ -213,7 +213,7 @@ const PolityBook = () => {
   // Load localStorage bookmarks for non-authenticated users
   useEffect(() => {
     if (!isAuthenticated) {
-      const localBookmarks = JSON.parse(localStorage.getItem('polity-bookmarks') || '[]');
+      const localBookmarks = JSON.parse(localStorage.getItem(`${subjectId}-bookmarks`) || '[]');
       setNotes(localBookmarks);
     }
   }, [isAuthenticated]);
