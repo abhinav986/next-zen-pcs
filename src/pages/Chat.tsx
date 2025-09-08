@@ -70,7 +70,7 @@ const Chat: React.FC = () => {
 
   const subscribeToMessages = () => {
     const channel = supabase
-      .channel('chat_messages')
+      .channel('chat_messages_realtime')
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
