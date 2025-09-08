@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, User, LogOut, Settings, Trophy, BookOpen, Target } from "lucide-react";
+import { Menu, User, LogOut, Settings, Trophy, BookOpen, Target, Newspaper } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 
@@ -66,6 +66,7 @@ export const Header = () => {
     { name: "Dashboard", href: "/dashboard", icon: Trophy },
     { name: "Test Series", href: "/test-series", icon: Target },
     { name: "Study Materials", href: "/study-materials", icon: BookOpen },
+    { name: "Current Affairs", href: "/current-affairs", icon: Newspaper },
   ];
 
   const NavLinks = ({ mobile = false }) => (
