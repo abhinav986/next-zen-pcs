@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          message_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          message_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          message_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       polity_questions: {
         Row: {
           correct_answer: string
@@ -173,6 +212,7 @@ export type Database = {
           options: Json
           question_order: number | null
           question_text: string
+          question_type: string | null
           test_series_id: string | null
           topic: string | null
         }
@@ -185,6 +225,7 @@ export type Database = {
           options: Json
           question_order?: number | null
           question_text: string
+          question_type?: string | null
           test_series_id?: string | null
           topic?: string | null
         }
@@ -197,6 +238,7 @@ export type Database = {
           options?: Json
           question_order?: number | null
           question_text?: string
+          question_type?: string | null
           test_series_id?: string | null
           topic?: string | null
         }
