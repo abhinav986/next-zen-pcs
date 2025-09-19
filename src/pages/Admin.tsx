@@ -14,6 +14,7 @@ import { SEOHead } from "@/components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
 import { upscSubjects } from "@/data/upscSubjects";
 import { useToast } from "@/hooks/use-toast";
+import { CurrentAffairsNotifier } from "@/components/CurrentAffairsNotifier";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -425,6 +426,7 @@ const Admin = () => {
             <TabsList>
               <TabsTrigger value="tests">Test Series</TabsTrigger>
               <TabsTrigger value="questions">Questions</TabsTrigger>
+              <TabsTrigger value="notifications">WhatsApp Notifications</TabsTrigger>
             </TabsList>
 
             <TabsContent value="tests">
@@ -1067,6 +1069,15 @@ const Admin = () => {
                     )}
                   </DialogContent>
                 </Dialog>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="notifications">
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-semibold mb-4">WhatsApp Notifications</h2>
+                  <CurrentAffairsNotifier />
+                </div>
               </div>
             </TabsContent>
           </Tabs>

@@ -3,11 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Target, Trophy, Calendar, TrendingUp, Clock } from "lucide-react";
+import { BookOpen, Target, Trophy, Calendar, TrendingUp, Clock, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { WhatsappSettings } from "@/components/WhatsappSettings";
 
 const Dashboard = () => {
   const [user, setUser] = useState<any>(null);
@@ -263,6 +264,11 @@ const Dashboard = () => {
                 )}
               </CardContent>
             </Card>
+          </section>
+
+          {/* WhatsApp Settings */}
+          <section className="mb-8">
+            <WhatsappSettings />
           </section>
 
           {/* Quick Actions */}

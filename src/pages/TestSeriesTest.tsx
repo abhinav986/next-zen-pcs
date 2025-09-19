@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
 import { QuestionNavigation } from "@/components/QuestionNavigation";
 import { User, Session } from "@supabase/supabase-js";
+import { sendTestNotification } from "@/utils/whatsappNotifications";
 
 interface TestQuestion {
   id: string;
@@ -312,9 +313,17 @@ const handleNextQuestion = () => {
         }
 
         // Store section-wise performance and weak sections
-        if (attemptData) {
+        if (attemptData && user) {
           await storeSectionPerformance(attemptData.id, finalAnswers);
           await storeWeakSections(attemptData.id, finalAnswers);
+          
+          // Send WhatsApp notification about test completion
+          await sendTestNotification(
+            user.id, 
+            testSeries?.title || 'Test', 
+            score, 
+            questions.length
+          );
         }
 
         toast.success('Test results saved successfully!');

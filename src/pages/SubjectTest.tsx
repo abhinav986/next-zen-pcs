@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { SEOHead } from "@/components/SEOHead";
 import { getSubjectById } from "@/data/upscSubjects";
 import { calculateWeakSections, WeakSectionAnalysis } from "@/utils/weakSectionAnalyzer";
+import { sendWeakSectionUpdate } from "@/utils/whatsappNotifications";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ChapterTest {
@@ -142,6 +143,9 @@ const SubjectTest = () => {
       setLoading(true);
       const analysis = await calculateWeakSections(user.id, subjectId);
       setWeakSections(analysis);
+      
+      // Send WhatsApp notification about weak sections
+      await sendWeakSectionUpdate(user.id, analysis);
     } catch (error) {
       console.error('Error fetching weak sections:', error);
     } finally {
