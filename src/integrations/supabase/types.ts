@@ -53,6 +53,39 @@ export type Database = {
         }
         Relationships: []
       }
+      email_preferences: {
+        Row: {
+          created_at: string
+          current_affairs_updates: boolean
+          id: string
+          is_enabled: boolean
+          test_notifications: boolean
+          updated_at: string
+          user_id: string
+          weak_section_updates: boolean
+        }
+        Insert: {
+          created_at?: string
+          current_affairs_updates?: boolean
+          id?: string
+          is_enabled?: boolean
+          test_notifications?: boolean
+          updated_at?: string
+          user_id: string
+          weak_section_updates?: boolean
+        }
+        Update: {
+          created_at?: string
+          current_affairs_updates?: boolean
+          id?: string
+          is_enabled?: boolean
+          test_notifications?: boolean
+          updated_at?: string
+          user_id?: string
+          weak_section_updates?: boolean
+        }
+        Relationships: []
+      }
       polity_questions: {
         Row: {
           correct_answer: string
@@ -409,42 +442,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      whatsapp_preferences: {
-        Row: {
-          created_at: string
-          current_affairs_updates: boolean
-          id: string
-          is_enabled: boolean
-          phone_number: string
-          test_notifications: boolean
-          updated_at: string
-          user_id: string
-          weak_section_updates: boolean
-        }
-        Insert: {
-          created_at?: string
-          current_affairs_updates?: boolean
-          id?: string
-          is_enabled?: boolean
-          phone_number: string
-          test_notifications?: boolean
-          updated_at?: string
-          user_id: string
-          weak_section_updates?: boolean
-        }
-        Update: {
-          created_at?: string
-          current_affairs_updates?: boolean
-          id?: string
-          is_enabled?: boolean
-          phone_number?: string
-          test_notifications?: boolean
-          updated_at?: string
-          user_id?: string
-          weak_section_updates?: boolean
-        }
-        Relationships: []
       }
     }
     Views: {
