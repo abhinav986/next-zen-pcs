@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
 import { QuestionNavigation } from "@/components/QuestionNavigation";
 import { User, Session } from "@supabase/supabase-js";
-import { sendTestNotification } from "@/utils/whatsappNotifications";
+import { sendTestNotification } from "@/utils/emailNotifications";
 
 interface TestQuestion {
   id: string;

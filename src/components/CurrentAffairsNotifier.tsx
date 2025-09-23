@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Newspaper, Send, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { sendCurrentAffairsUpdate } from "@/utils/whatsappNotifications";
+import { sendCurrentAffairsUpdate } from "@/utils/emailNotifications";
 
 export const CurrentAffairsNotifier = () => {
   const [updates, setUpdates] = useState<string[]>([
@@ -37,7 +37,7 @@ export const CurrentAffairsNotifier = () => {
       
       // Get all users with current affairs notifications enabled
       const { data: users, error } = await supabase
-        .from('whatsapp_preferences')
+        .from('email_preferences')
         .select('user_id')
         .eq('is_enabled', true)
         .eq('current_affairs_updates', true);

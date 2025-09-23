@@ -1,31 +1,35 @@
 import { supabase } from "@/integrations/supabase/client";
 import { WeakSectionAnalysis } from "./weakSectionAnalyzer";
 
-interface WhatsAppNotificationData {
-  phone_number: string;
+interface EmailNotificationData {
+  email: string;
+  subject: string;
   message: string;
   type: 'weak_section' | 'current_affairs' | 'test_notification' | 'test';
 }
 
-export const sendWhatsAppNotification = async (data: WhatsAppNotificationData) => {
+export const sendEmailNotification = async (data: EmailNotificationData) => {
   try {
-    const { data: result, error } = await supabase.functions.invoke('send-whatsapp', {
+    const { data: result, error } = await supabase.functions.invoke('send-email', {
       body: data
     });
 
     if (error) throw error;
     return result;
   } catch (error) {
-    console.error('Error sending WhatsApp notification:', error);
+    console.error('Error sending email notification:', error);
     throw error;
   }
 };
 
 export const sendWeakSectionUpdate = async (userId: string, weakSections: WeakSectionAnalysis[]) => {
   try {
-    // Get user's WhatsApp preferences
+    // Get user's email preferences and user info
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     const { data: preferences, error: prefError } = await supabase
-      .from('whatsapp_preferences')
+      .from('email_preferences')
       .select('*')
       .eq('user_id', userId)
       .eq('is_enabled', true)
@@ -33,7 +37,7 @@ export const sendWeakSectionUpdate = async (userId: string, weakSections: WeakSe
       .single();
 
     if (prefError || !preferences) {
-      console.log('User has no WhatsApp preferences or disabled weak section updates');
+      console.log('User has no email preferences or disabled weak section updates');
       return;
     }
 
@@ -45,8 +49,9 @@ export const sendWeakSectionUpdate = async (userId: string, weakSections: WeakSe
 
 🎯 UPSC Prep Academy`;
 
-      await sendWhatsAppNotification({
-        phone_number: preferences.phone_number,
+      await sendEmailNotification({
+        email: user.email!,
+        subject: "🎉 No Weak Sections - Keep It Up!",
         message,
         type: 'weak_section'
       });
@@ -76,22 +81,26 @@ ${index + 1}. ${section.topic}
 
 Keep pushing forward! 💪`;
 
-    await sendWhatsAppNotification({
-      phone_number: preferences.phone_number,
+    await sendEmailNotification({
+      email: user.email!,
+      subject: "📊 Your Weak Section Analysis",
       message,
       type: 'weak_section'
     });
 
   } catch (error) {
-    console.error('Error sending weak section WhatsApp update:', error);
+    console.error('Error sending weak section email update:', error);
   }
 };
 
 export const sendCurrentAffairsUpdate = async (userId: string, updates: string[]) => {
   try {
-    // Get user's WhatsApp preferences
+    // Get user's email preferences and user info
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     const { data: preferences, error: prefError } = await supabase
-      .from('whatsapp_preferences')
+      .from('email_preferences')
       .select('*')
       .eq('user_id', userId)
       .eq('is_enabled', true)
@@ -99,7 +108,7 @@ export const sendCurrentAffairsUpdate = async (userId: string, updates: string[]
       .single();
 
     if (prefError || !preferences) {
-      console.log('User has no WhatsApp preferences or disabled current affairs updates');
+      console.log('User has no email preferences or disabled current affairs updates');
       return;
     }
 
@@ -127,22 +136,26 @@ ${index + 1}. ${update}
 
 Stay informed, stay ahead! 🚀`;
 
-    await sendWhatsAppNotification({
-      phone_number: preferences.phone_number,
+    await sendEmailNotification({
+      email: user.email!,
+      subject: `📰 Current Affairs Update - ${todayDate}`,
       message,
       type: 'current_affairs'
     });
 
   } catch (error) {
-    console.error('Error sending current affairs WhatsApp update:', error);
+    console.error('Error sending current affairs email update:', error);
   }
 };
 
 export const sendTestNotification = async (userId: string, testName: string, score: number, totalQuestions: number) => {
   try {
-    // Get user's WhatsApp preferences
+    // Get user's email preferences and user info
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     const { data: preferences, error: prefError } = await supabase
-      .from('whatsapp_preferences')
+      .from('email_preferences')
       .select('*')
       .eq('user_id', userId)
       .eq('is_enabled', true)
@@ -150,7 +163,7 @@ export const sendTestNotification = async (userId: string, testName: string, sco
       .single();
 
     if (prefError || !preferences) {
-      console.log('User has no WhatsApp preferences or disabled test notifications');
+      console.log('User has no email preferences or disabled test notifications');
       return;
     }
 
@@ -183,13 +196,14 @@ ${encouragement}
 
 🎯 Keep pushing towards your UPSC dream!`;
 
-    await sendWhatsAppNotification({
-      phone_number: preferences.phone_number,
+    await sendEmailNotification({
+      email: user.email!,
+      subject: `${emoji} Test Results: ${testName}`,
       message,
       type: 'test_notification'
     });
 
   } catch (error) {
-    console.error('Error sending test notification via WhatsApp:', error);
+    console.error('Error sending test notification via email:', error);
   }
 };

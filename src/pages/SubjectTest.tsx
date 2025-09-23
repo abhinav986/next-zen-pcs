@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { SEOHead } from "@/components/SEOHead";
 import { getSubjectById } from "@/data/upscSubjects";
 import { calculateWeakSections, WeakSectionAnalysis } from "@/utils/weakSectionAnalyzer";
-import { sendWeakSectionUpdate } from "@/utils/whatsappNotifications";
+import { sendWeakSectionUpdate } from "@/utils/emailNotifications";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ChapterTest {

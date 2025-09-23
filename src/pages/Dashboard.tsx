@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { WhatsappSettings } from "@/components/WhatsappSettings";
+import { EmailSettings } from "@/components/EmailSettings";
 
 const Dashboard = () => {
   const [user, setUser] = useState<any>(null);
@@ -268,7 +268,7 @@ const Dashboard = () => {
 
           {/* WhatsApp Settings */}
           <section className="mb-8">
-            <WhatsappSettings />
+            <EmailSettings />
           </section>
 
           {/* Quick Actions */}
