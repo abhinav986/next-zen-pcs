@@ -426,7 +426,7 @@ const Admin = () => {
             <TabsList>
               <TabsTrigger value="tests">Test Series</TabsTrigger>
               <TabsTrigger value="questions">Questions</TabsTrigger>
-              <TabsTrigger value="notifications">WhatsApp Notifications</TabsTrigger>
+              <TabsTrigger value="notifications">Email Notifications</TabsTrigger>
             </TabsList>
 
             <TabsContent value="tests">
@@ -1075,7 +1075,7 @@ const Admin = () => {
             <TabsContent value="notifications">
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-semibold mb-4">WhatsApp Notifications</h2>
+                  <h2 className="text-2xl font-semibold mb-4">Email Notifications</h2>
                   <CurrentAffairsNotifier />
                 </div>
               </div>
