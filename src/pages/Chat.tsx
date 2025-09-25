@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Send, Paperclip, Image, FileText } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Send, Paperclip, Image, FileText, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface ChatMessage {
@@ -21,13 +22,36 @@ interface ChatMessage {
   profiles?: {
     display_name: string | null;
   } | null;
+  likes?: ChatLike[];
+  comments?: ChatComment[];
+}
+
+interface ChatLike {
+  id: string;
+  user_id: string;
+  emoji: string;
+  profiles?: {
+    display_name: string | null;
+  } | null;
+}
+
+interface ChatComment {
+  id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  profiles?: {
+    display_name: string | null;
+  } | null;
 }
 
 const Chat: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [newComment, setNewComment] = useState<{ [key: string]: string }>({});
   const [uploading, setUploading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [expandedComments, setExpandedComments] = useState<{ [key: string]: boolean }>({});
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,7 +80,20 @@ const Chat: React.FC = () => {
       .from('chat_messages')
       .select(`
         *,
-        profiles:user_id (display_name)
+        profiles:user_id (display_name),
+        likes:chat_likes (
+          id,
+          user_id,
+          emoji,
+          profiles:user_id (display_name)
+        ),
+        comments:chat_comments (
+          id,
+          user_id,
+          content,
+          created_at,
+          profiles:user_id (display_name)
+        )
       `)
       .order('created_at', { ascending: true });
 
@@ -194,49 +231,247 @@ const Chat: React.FC = () => {
     }
   };
 
+  const handleLikeMessage = async (messageId: string, emoji: string = '👍') => {
+    if (!user) return;
+
+    // Check if user already liked with this emoji
+    const message = messages.find(m => m.id === messageId);
+    const existingLike = message?.likes?.find(like => 
+      like.user_id === user.id && like.emoji === emoji
+    );
+
+    if (existingLike) {
+      // Remove like
+      const { error } = await supabase
+        .from('chat_likes')
+        .delete()
+        .eq('id', existingLike.id);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to remove like",
+          variant: "destructive"
+        });
+        return;
+      }
+    } else {
+      // Add like
+      const { error } = await supabase
+        .from('chat_likes')
+        .insert([{
+          user_id: user.id,
+          message_id: messageId,
+          emoji
+        }]);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to add like",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    // Refresh messages to show updated likes
+    fetchMessages();
+  };
+
+  const handleAddComment = async (messageId: string) => {
+    if (!user || !newComment[messageId]?.trim()) return;
+
+    const { error } = await supabase
+      .from('chat_comments')
+      .insert([{
+        user_id: user.id,
+        message_id: messageId,
+        content: newComment[messageId].trim()
+      }]);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add comment",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setNewComment(prev => ({ ...prev, [messageId]: '' }));
+    fetchMessages();
+  };
+
+  const toggleComments = (messageId: string) => {
+    setExpandedComments(prev => ({
+      ...prev,
+      [messageId]: !prev[messageId]
+    }));
+  };
+
   const renderMessage = (message: ChatMessage) => {
     const isOwnMessage = user && message.user_id === user.id;
     const displayName = message.profiles?.display_name || 'Anonymous';
+    const likes = message.likes || [];
+    const comments = message.comments || [];
+    
+    // Group likes by emoji
+    const likeGroups = likes.reduce((acc, like) => {
+      if (!acc[like.emoji]) {
+        acc[like.emoji] = [];
+      }
+      acc[like.emoji].push(like);
+      return acc;
+    }, {} as { [emoji: string]: ChatLike[] });
 
     return (
-      <div key={message.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4`}>
-        <Card className={`max-w-xs md:max-w-md p-3 ${isOwnMessage ? 'bg-primary text-primary-foreground' : 'bg-card'}`}>
-          <div className="text-xs opacity-70 mb-1">
-            {displayName} • {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-          </div>
+      <div key={message.id} className="mb-6">
+        <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
+          <Card className="max-w-xs md:max-w-lg p-4 bg-gray-50 border-gray-200">
+            <div className="text-xs text-gray-600 mb-2">
+              {displayName} • {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+            </div>
 
-          {message.message_type === 'text' && message.content && (
-            <div className="break-words">{message.content}</div>
-          )}
+            {message.message_type === 'text' && message.content && (
+              <div className="break-words mb-3">{message.content}</div>
+            )}
 
-          {message.message_type === 'file' && message.file_url && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                {message.file_type?.startsWith('image/') && <Image className="h-4 w-4" />}
-                {message.file_type === 'application/pdf' && <FileText className="h-4 w-4" />}
-                {message.file_type === 'text/plain' && <FileText className="h-4 w-4" />}
-                <span className="text-sm font-medium">{message.file_name}</span>
+            {message.message_type === 'file' && message.file_url && (
+              <div className="mb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  {message.file_type?.startsWith('image/') && <Image className="h-4 w-4" />}
+                  {message.file_type === 'application/pdf' && <FileText className="h-4 w-4" />}
+                  {message.file_type === 'text/plain' && <FileText className="h-4 w-4" />}
+                  <span className="text-sm font-medium">{message.file_name}</span>
+                </div>
+
+                {message.file_type?.startsWith('image/') ? (
+                  <img 
+                    src={message.file_url} 
+                    alt={message.file_name || 'Uploaded image'} 
+                    className="max-w-full h-auto rounded"
+                  />
+                ) : (
+                  <a 
+                    href={message.file_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:text-blue-600 underline"
+                  >
+                    Download {message.file_name}
+                  </a>
+                )}
               </div>
+            )}
 
-              {message.file_type?.startsWith('image/') ? (
-                <img 
-                  src={message.file_url} 
-                  alt={message.file_name || 'Uploaded image'} 
-                  className="max-w-full h-auto rounded"
-                />
-              ) : (
-                <a 
-                  href={message.file_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:text-blue-600 underline"
+            {/* Like reactions */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {Object.entries(likeGroups).map(([emoji, emojiLikes]) => {
+                const userLiked = emojiLikes.some(like => like.user_id === user?.id);
+                return (
+                  <Button
+                    key={emoji}
+                    variant={userLiked ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 text-xs px-2"
+                    onClick={() => handleLikeMessage(message.id, emoji)}
+                  >
+                    {emoji} {emojiLikes.length}
+                  </Button>
+                );
+              })}
+              
+              {/* Quick emoji reactions */}
+              {!likeGroups['👍'] && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs px-2"
+                  onClick={() => handleLikeMessage(message.id, '👍')}
                 >
-                  Download {message.file_name}
-                </a>
+                  👍
+                </Button>
+              )}
+              {!likeGroups['❤️'] && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs px-2"
+                  onClick={() => handleLikeMessage(message.id, '❤️')}
+                >
+                  ❤️
+                </Button>
+              )}
+              {!likeGroups['😄'] && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs px-2"
+                  onClick={() => handleLikeMessage(message.id, '😄')}
+                >
+                  😄
+                </Button>
               )}
             </div>
-          )}
-        </Card>
+
+            {/* Comments toggle and count */}
+            <div className="border-t pt-2">
+              <Collapsible
+                open={expandedComments[message.id]}
+                onOpenChange={() => toggleComments(message.id)}
+              >
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full justify-between">
+                    <div className="flex items-center gap-2">
+                      <MessageCircle className="h-4 w-4" />
+                      <span>{comments.length} {comments.length === 1 ? 'Comment' : 'Comments'}</span>
+                    </div>
+                    {expandedComments[message.id] ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+
+                <CollapsibleContent className="space-y-2 mt-2">
+                  {/* Existing comments */}
+                  {comments
+                    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                    .map((comment) => (
+                      <div key={comment.id} className="bg-white p-2 rounded border text-sm">
+                        <div className="text-xs text-gray-600 mb-1">
+                          {comment.profiles?.display_name || 'Anonymous'} • {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                        </div>
+                        <div>{comment.content}</div>
+                      </div>
+                    ))}
+                  
+                  {/* Add comment input */}
+                  {user && (
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        value={newComment[message.id] || ''}
+                        onChange={(e) => setNewComment(prev => ({ ...prev, [message.id]: e.target.value }))}
+                        onKeyPress={(e) => e.key === 'Enter' && handleAddComment(message.id)}
+                        placeholder="Add a comment..."
+                        className="text-sm"
+                      />
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleAddComment(message.id)}
+                        disabled={!newComment[message.id]?.trim()}
+                      >
+                        Post
+                      </Button>
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+          </Card>
+        </div>
       </div>
     );
   };
