@@ -84,7 +84,15 @@ export type Database = {
           user_id?: string
           weak_section_updates?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_email_preferences_user_id"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       polity_questions: {
         Row: {
