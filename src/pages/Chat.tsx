@@ -43,7 +43,7 @@ interface ChatComment {
   profiles?: {
     display_name: string | null;
   } | null;
-  comment_likes?: ChatCommentLike[];
+  likes?: ChatCommentLike[];
 }
 
 interface ChatCommentLike {
@@ -103,7 +103,7 @@ const Chat: React.FC = () => {
           content,
           created_at,
           profiles:user_id (display_name),
-          comment_likes:chat_comment_likes (
+          likes:chat_comment_likes (
             id,
             user_id,
             emoji,
@@ -295,6 +295,57 @@ const Chat: React.FC = () => {
     fetchMessages();
   };
 
+  const handleLikeComment = async (commentId: string, emoji: string = '👍') => {
+    if (!user) return;
+
+    // Find the comment to check existing likes
+    const comment = messages
+      .flatMap(m => m.comments || [])
+      .find(c => c.id === commentId);
+
+    const existingLike = comment?.likes?.find(like => 
+      like.user_id === user.id && like.emoji === emoji
+    );
+
+    if (existingLike) {
+      // Remove like
+      const { error } = await supabase
+        .from('chat_comment_likes')
+        .delete()
+        .eq('id', existingLike.id);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to remove comment like",
+          variant: "destructive"
+        });
+        return;
+      }
+    } else {
+      // Add like
+      const { error } = await supabase
+        .from('chat_comment_likes')
+        .insert([{
+          user_id: user.id,
+          comment_id: commentId,
+          emoji
+        }]);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to like comment",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    // Refresh messages to show updated comment likes
+    fetchMessages();
+  };
+
   const handleAddComment = async (messageId: string) => {
     if (!user || !newComment[messageId]?.trim()) return;
 
@@ -324,57 +375,6 @@ const Chat: React.FC = () => {
       ...prev,
       [messageId]: !prev[messageId]
     }));
-  };
-
-  const handleLikeComment = async (commentId: string, emoji: string = '👍') => {
-    if (!user) return;
-
-    // Find the comment to check existing likes
-    const comment = messages
-      .flatMap(m => m.comments || [])
-      .find(c => c.id === commentId);
-
-    const existingLike = comment?.comment_likes?.find(like => 
-      like.user_id === user.id && like.emoji === emoji
-    );
-
-    if (existingLike) {
-      // Remove like
-      const { error } = await supabase
-        .from('chat_comment_likes')
-        .delete()
-        .eq('id', existingLike.id);
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to remove like",
-          variant: "destructive"
-        });
-        return;
-      }
-    } else {
-      // Add like
-      const { error } = await supabase
-        .from('chat_comment_likes')
-        .insert([{
-          user_id: user.id,
-          comment_id: commentId,
-          emoji
-        }]);
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to add like",
-          variant: "destructive"
-        });
-        return;
-      }
-    }
-
-    // Refresh messages to show updated likes
-    fetchMessages();
   };
 
   const renderMessage = (message: ChatMessage) => {
@@ -507,7 +507,7 @@ const Chat: React.FC = () => {
                   {comments
                     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
                     .map((comment) => {
-                      const commentLikes = comment.comment_likes || [];
+                      const commentLikes = comment.likes || [];
                       const commentLikeGroups = commentLikes.reduce((acc, like) => {
                         if (!acc[like.emoji]) {
                           acc[like.emoji] = [];
