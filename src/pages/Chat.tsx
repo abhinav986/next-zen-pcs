@@ -43,6 +43,16 @@ interface ChatComment {
   profiles?: {
     display_name: string | null;
   } | null;
+  comment_likes?: ChatCommentLike[];
+}
+
+interface ChatCommentLike {
+  id: string;
+  user_id: string;
+  emoji: string;
+  profiles?: {
+    display_name: string | null;
+  } | null;
 }
 
 const Chat: React.FC = () => {
@@ -92,7 +102,13 @@ const Chat: React.FC = () => {
           user_id,
           content,
           created_at,
-          profiles:user_id (display_name)
+          profiles:user_id (display_name),
+          comment_likes:chat_comment_likes (
+            id,
+            user_id,
+            emoji,
+            profiles:user_id (display_name)
+          )
         )
       `)
       .order('created_at', { ascending: true });
@@ -310,6 +326,57 @@ const Chat: React.FC = () => {
     }));
   };
 
+  const handleLikeComment = async (commentId: string, emoji: string = '👍') => {
+    if (!user) return;
+
+    // Find the comment to check existing likes
+    const comment = messages
+      .flatMap(m => m.comments || [])
+      .find(c => c.id === commentId);
+
+    const existingLike = comment?.comment_likes?.find(like => 
+      like.user_id === user.id && like.emoji === emoji
+    );
+
+    if (existingLike) {
+      // Remove like
+      const { error } = await supabase
+        .from('chat_comment_likes')
+        .delete()
+        .eq('id', existingLike.id);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to remove like",
+          variant: "destructive"
+        });
+        return;
+      }
+    } else {
+      // Add like
+      const { error } = await supabase
+        .from('chat_comment_likes')
+        .insert([{
+          user_id: user.id,
+          comment_id: commentId,
+          emoji
+        }]);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to add like",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    // Refresh messages to show updated likes
+    fetchMessages();
+  };
+
   const renderMessage = (message: ChatMessage) => {
     const isOwnMessage = user && message.user_id === user.id;
     const displayName = message.profiles?.display_name || 'Anonymous';
@@ -418,7 +485,7 @@ const Chat: React.FC = () => {
             {/* Comments toggle and count */}
             <div className="border-t pt-2">
               <Collapsible
-                open={expandedComments[message.id]}
+                open={expandedComments[message.id] || false}
                 onOpenChange={() => toggleComments(message.id)}
               >
                 <CollapsibleTrigger asChild>
@@ -439,14 +506,65 @@ const Chat: React.FC = () => {
                   {/* Existing comments */}
                   {comments
                     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                    .map((comment) => (
-                      <div key={comment.id} className="bg-white p-2 rounded border text-sm">
-                        <div className="text-xs text-gray-600 mb-1">
-                          {comment.profiles?.display_name || 'Anonymous'} • {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                    .map((comment) => {
+                      const commentLikes = comment.comment_likes || [];
+                      const commentLikeGroups = commentLikes.reduce((acc, like) => {
+                        if (!acc[like.emoji]) {
+                          acc[like.emoji] = [];
+                        }
+                        acc[like.emoji].push(like);
+                        return acc;
+                      }, {} as { [emoji: string]: ChatCommentLike[] });
+
+                      return (
+                        <div key={comment.id} className="bg-white p-3 rounded border text-sm">
+                          <div className="text-xs text-gray-600 mb-1">
+                            {comment.profiles?.display_name || 'Anonymous'} • {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                          </div>
+                          <div className="mb-2">{comment.content}</div>
+                          
+                          {/* Comment like reactions */}
+                          <div className="flex flex-wrap gap-1">
+                            {Object.entries(commentLikeGroups).map(([emoji, emojiLikes]) => {
+                              const userLiked = emojiLikes.some(like => like.user_id === user?.id);
+                              return (
+                                <Button
+                                  key={emoji}
+                                  variant={userLiked ? "default" : "outline"}
+                                  size="sm"
+                                  className="h-6 text-xs px-1"
+                                  onClick={() => handleLikeComment(comment.id, emoji)}
+                                >
+                                  {emoji} {emojiLikes.length}
+                                </Button>
+                              );
+                            })}
+                            
+                            {/* Quick emoji reactions for comments */}
+                            {!commentLikeGroups['👍'] && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 text-xs px-1"
+                                onClick={() => handleLikeComment(comment.id, '👍')}
+                              >
+                                👍
+                              </Button>
+                            )}
+                            {!commentLikeGroups['❤️'] && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 text-xs px-1"
+                                onClick={() => handleLikeComment(comment.id, '❤️')}
+                              >
+                                ❤️
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                        <div>{comment.content}</div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   
                   {/* Add comment input */}
                   {user && (
