@@ -69,6 +69,9 @@ const Chat: React.FC = () => {
   const [expandedComments, setExpandedComments] = useState<{ [key: string]: boolean }>({});
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [fileCaption, setFileCaption] = useState('');
+  const [showFileDialog, setShowFileDialog] = useState(false);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -180,7 +183,7 @@ const Chat: React.FC = () => {
     setNewMessage('');
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
@@ -195,7 +198,7 @@ const Chat: React.FC = () => {
       return;
     }
 
-    // Validate file size (10MB max)
+    // Check file size (10MB limit)
     if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "File too large",
@@ -205,15 +208,24 @@ const Chat: React.FC = () => {
       return;
     }
 
+    setPendingFile(file);
+    setFileCaption('');
+    setShowFileDialog(true);
+  };
+
+  const handleFileUpload = async () => {
+    if (!pendingFile || !user) return;
+
     setUploading(true);
+    setShowFileDialog(false);
 
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = pendingFile.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('chat-files')
-        .upload(fileName, file);
+        .upload(fileName, pendingFile);
 
       if (uploadError) throw uploadError;
 
@@ -225,12 +237,12 @@ const Chat: React.FC = () => {
         .from('chat_messages')
         .insert([{
           user_id: user.id,
-          content: null,
+          content: fileCaption.trim() || null,
           message_type: 'file',
           file_url: publicUrl,
-          file_name: file.name,
-          file_type: file.type,
-          file_size: file.size
+          file_name: pendingFile.name,
+          file_type: pendingFile.type,
+          file_size: pendingFile.size
         }]);
 
       if (messageError) throw messageError;
@@ -248,9 +260,20 @@ const Chat: React.FC = () => {
       });
     } finally {
       setUploading(false);
+      setPendingFile(null);
+      setFileCaption('');
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+    }
+  };
+
+  const cancelFileUpload = () => {
+    setPendingFile(null);
+    setFileCaption('');
+    setShowFileDialog(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -839,13 +862,62 @@ const Chat: React.FC = () => {
             </Button>
           </div>
 
-          <input
+            <input
             ref={fileInputRef}
             type="file"
             accept="image/*,.pdf,.txt"
-            onChange={handleFileUpload}
+            onChange={handleFileSelect}
             className="hidden"
           />
+
+          {/* File Upload Dialog */}
+          <AlertDialog open={showFileDialog} onOpenChange={setShowFileDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Add File</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {pendingFile && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 p-2 bg-muted rounded">
+                        {pendingFile.type.startsWith('image/') ? (
+                          <Image className="h-4 w-4" />
+                        ) : pendingFile.type.includes('pdf') ? (
+                          <FileText className="h-4 w-4" />
+                        ) : (
+                          <Paperclip className="h-4 w-4" />
+                        )}
+                        <span className="text-sm">{pendingFile.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          ({Math.round(pendingFile.size / 1024)} KB)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <ReactQuill
+                    value={fileCaption}
+                    onChange={setFileCaption}
+                    theme="snow"
+                    placeholder="Add a caption (optional)..."
+                    modules={{
+                      toolbar: [
+                        ['bold', 'italic', 'underline'],
+                        ['link'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['clean']
+                      ]
+                    }}
+                    className="bg-white rounded"
+                  />
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={cancelFileUpload}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleFileUpload} disabled={uploading}>
+                  {uploading ? 'Uploading...' : 'Share'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           <div className="text-xs text-muted-foreground mt-2">
             Supported files: Images (JPG, PNG, GIF), PDFs, Text files • Max size: 10MB
