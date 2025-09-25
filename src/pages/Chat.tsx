@@ -6,8 +6,11 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Send, Paperclip, Image, FileText, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Send, Paperclip, Image, FileText, MessageCircle, ChevronDown, ChevronUp, Edit, Trash2, Check, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 interface ChatMessage {
   id: string;
@@ -19,6 +22,8 @@ interface ChatMessage {
   file_type: string | null;
   file_size: number | null;
   created_at: string;
+  is_edited?: boolean;
+  edited_at?: string | null;
   profiles?: {
     display_name: string | null;
   } | null;
@@ -62,6 +67,8 @@ const Chat: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [expandedComments, setExpandedComments] = useState<{ [key: string]: boolean }>({});
+  const [editingMessage, setEditingMessage] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -377,11 +384,73 @@ const Chat: React.FC = () => {
     }));
   };
 
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    if (!user || !newContent.trim()) return;
+
+    const { error } = await supabase
+      .from('chat_messages')
+      .update({
+        content: newContent.trim(),
+        is_edited: true
+      })
+      .eq('id', messageId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to edit message",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setEditingMessage(null);
+    setEditContent('');
+    fetchMessages();
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('chat_messages')
+      .delete()
+      .eq('id', messageId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete message",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Message deleted",
+      description: "Your message has been deleted successfully"
+    });
+    fetchMessages();
+  };
+
+  const startEdit = (message: ChatMessage) => {
+    setEditingMessage(message.id);
+    setEditContent(message.content || '');
+  };
+
+  const cancelEdit = () => {
+    setEditingMessage(null);
+    setEditContent('');
+  };
+
   const renderMessage = (message: ChatMessage) => {
     const isOwnMessage = user && message.user_id === user.id;
     const displayName = message.profiles?.display_name || 'Anonymous';
     const likes = message.likes || [];
     const comments = message.comments || [];
+    const isEditing = editingMessage === message.id;
     
     // Group likes by emoji
     const likeGroups = likes.reduce((acc, like) => {
@@ -396,40 +465,131 @@ const Chat: React.FC = () => {
       <div key={message.id} className="mb-6">
         <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
           <Card className="max-w-xs md:max-w-lg p-4 bg-gray-50 border-gray-200">
-            <div className="text-xs text-gray-600 mb-2">
-              {displayName} • {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-            </div>
-
-            {message.message_type === 'text' && message.content && (
-              <div className="break-words mb-3">{message.content}</div>
-            )}
-
-            {message.message_type === 'file' && message.file_url && (
-              <div className="mb-3">
-                <div className="flex items-center gap-2 mb-2">
-                  {message.file_type?.startsWith('image/') && <Image className="h-4 w-4" />}
-                  {message.file_type === 'application/pdf' && <FileText className="h-4 w-4" />}
-                  {message.file_type === 'text/plain' && <FileText className="h-4 w-4" />}
-                  <span className="text-sm font-medium">{message.file_name}</span>
-                </div>
-
-                {message.file_type?.startsWith('image/') ? (
-                  <img 
-                    src={message.file_url} 
-                    alt={message.file_name || 'Uploaded image'} 
-                    className="max-w-full h-auto rounded"
-                  />
-                ) : (
-                  <a 
-                    href={message.file_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:text-blue-600 underline"
-                  >
-                    Download {message.file_name}
-                  </a>
+            <div className="flex justify-between items-start mb-2">
+              <div className="text-xs text-gray-600 flex-1">
+                {displayName} • {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                {message.is_edited && message.edited_at && (
+                  <span className="ml-2 italic">(edited {formatDistanceToNow(new Date(message.edited_at), { addSuffix: true })})</span>
                 )}
               </div>
+              
+              {/* Edit/Delete buttons for own messages */}
+              {isOwnMessage && message.message_type === 'text' && !isEditing && (
+                <div className="flex gap-1 ml-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => startEdit(message)}
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Message</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this message? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteMessage(message.id)}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              )}
+            </div>
+
+            {/* Message content or edit form */}
+            {isEditing ? (
+              <div className="mb-3">
+                <ReactQuill
+                  value={editContent}
+                  onChange={setEditContent}
+                  theme="snow"
+                  placeholder="Edit your message..."
+                  modules={{
+                    toolbar: [
+                      ['bold', 'italic', 'underline'],
+                      ['link'],
+                      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                      ['clean']
+                    ]
+                  }}
+                  className="bg-white rounded"
+                />
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    size="sm"
+                    onClick={() => handleEditMessage(message.id, editContent)}
+                    disabled={!editContent.trim()}
+                  >
+                    <Check className="h-3 w-3 mr-1" />
+                    Save
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={cancelEdit}
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {message.message_type === 'text' && message.content && (
+                  <div 
+                    className="break-words mb-3 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: message.content }}
+                  />
+                )}
+
+                {message.message_type === 'file' && message.file_url && (
+                  <div className="mb-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      {message.file_type?.startsWith('image/') && <Image className="h-4 w-4" />}
+                      {message.file_type === 'application/pdf' && <FileText className="h-4 w-4" />}
+                      {message.file_type === 'text/plain' && <FileText className="h-4 w-4" />}
+                      <span className="text-sm font-medium">{message.file_name}</span>
+                    </div>
+
+                    {message.file_type?.startsWith('image/') ? (
+                      <img 
+                        src={message.file_url} 
+                        alt={message.file_name || 'Uploaded image'} 
+                        className="max-w-full h-auto rounded"
+                      />
+                    ) : (
+                      <a 
+                        href={message.file_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-600 underline"
+                      >
+                        Download {message.file_name}
+                      </a>
+                    )}
+                  </div>
+                )}
+              </>
             )}
 
             {/* Like reactions */}
@@ -639,6 +799,24 @@ const Chat: React.FC = () => {
 
         {/* Input Area */}
         <div className="border-t p-4">
+          <div className="mb-4">
+            <ReactQuill
+              value={newMessage}
+              onChange={setNewMessage}
+              theme="snow"
+              placeholder="Type your message..."
+              modules={{
+                toolbar: [
+                  ['bold', 'italic', 'underline'],
+                  ['link'],
+                  [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                  ['clean']
+                ]
+              }}
+              className="bg-white rounded"
+            />
+          </div>
+          
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -649,16 +827,15 @@ const Chat: React.FC = () => {
               <Paperclip className="h-4 w-4" />
             </Button>
             
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="Type your message..."
-              className="flex-1"
-            />
+            <div className="flex-1" />
             
-            <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
-              <Send className="h-4 w-4" />
+            <Button 
+              onClick={handleSendMessage} 
+              disabled={!newMessage.trim()}
+              className="ml-auto"
+            >
+              <Send className="h-4 w-4 mr-2" />
+              Send
             </Button>
           </div>
 

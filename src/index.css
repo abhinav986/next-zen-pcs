@@ -103,3 +103,46 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* React Quill Editor Styling */
+.ql-toolbar {
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+  border-bottom: none !important;
+  background-color: hsl(var(--muted));
+}
+
+.ql-container {
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+  border-top: none !important;
+  font-family: inherit;
+}
+
+.ql-editor {
+  min-height: 80px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ql-editor p {
+  margin-bottom: 0.5rem;
+}
+
+.ql-editor.ql-blank::before {
+  color: hsl(var(--muted-foreground));
+  font-style: normal;
+}
+
+/* Chat message content styling */
+.prose p:last-child {
+  margin-bottom: 0;
+}
+
+.prose ul, .prose ol {
+  margin: 0.5rem 0;
+}
+
+.prose li {
+  margin: 0.25rem 0;
+}
