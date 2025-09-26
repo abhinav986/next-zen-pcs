@@ -9,8 +9,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Send, Paperclip, Image, FileText, MessageCircle, ChevronDown, ChevronUp, Edit, Trash2, Check, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
 
 interface ChatMessage {
   id: string;
@@ -497,16 +495,18 @@ const Chat: React.FC = () => {
               </div>
               
               {/* Edit/Delete buttons for own messages */}
-              {isOwnMessage && message.message_type === 'text' && !isEditing && (
+              {isOwnMessage && !isEditing && (
                 <div className="flex gap-1 ml-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => startEdit(message)}
-                  >
-                    <Edit className="h-3 w-3" />
-                  </Button>
+                  {message.message_type === 'text' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => startEdit(message)}
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                  )}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
@@ -542,22 +542,13 @@ const Chat: React.FC = () => {
             {/* Message content or edit form */}
             {isEditing ? (
               <div className="mb-3">
-                <ReactQuill
+                <Input
                   value={editContent}
-                  onChange={setEditContent}
-                  theme="snow"
+                  onChange={(e) => setEditContent(e.target.value)}
                   placeholder="Edit your message..."
-                  modules={{
-                    toolbar: [
-                      ['bold', 'italic', 'underline'],
-                      ['link'],
-                      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                      ['clean']
-                    ]
-                  }}
-                  className="bg-white rounded"
+                  className="mb-2"
                 />
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-2">
                   <Button
                     size="sm"
                     onClick={() => handleEditMessage(message.id, editContent)}
@@ -579,14 +570,18 @@ const Chat: React.FC = () => {
             ) : (
               <>
                 {message.message_type === 'text' && message.content && (
-                  <div 
-                    className="break-words mb-3 prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: message.content }}
-                  />
+                  <div className="break-words mb-3">
+                    {message.content}
+                  </div>
                 )}
 
                 {message.message_type === 'file' && message.file_url && (
                   <div className="mb-3">
+                    {message.content && (
+                      <div className="break-words mb-2 text-sm text-gray-700">
+                        {message.content}
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 mb-2">
                       {message.file_type?.startsWith('image/') && <Image className="h-4 w-4" />}
                       {message.file_type === 'application/pdf' && <FileText className="h-4 w-4" />}
@@ -823,20 +818,11 @@ const Chat: React.FC = () => {
         {/* Input Area */}
         <div className="border-t p-4">
           <div className="mb-4">
-            <ReactQuill
+            <Input
               value={newMessage}
-              onChange={setNewMessage}
-              theme="snow"
+              onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type your message..."
-              modules={{
-                toolbar: [
-                  ['bold', 'italic', 'underline'],
-                  ['link'],
-                  [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                  ['clean']
-                ]
-              }}
-              className="bg-white rounded"
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             />
           </div>
           
@@ -893,20 +879,10 @@ const Chat: React.FC = () => {
                       </div>
                     </div>
                   )}
-                  <ReactQuill
+                  <Input
                     value={fileCaption}
-                    onChange={setFileCaption}
-                    theme="snow"
+                    onChange={(e) => setFileCaption(e.target.value)}
                     placeholder="Add a caption (optional)..."
-                    modules={{
-                      toolbar: [
-                        ['bold', 'italic', 'underline'],
-                        ['link'],
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                        ['clean']
-                      ]
-                    }}
-                    className="bg-white rounded"
                   />
                 </AlertDialogDescription>
               </AlertDialogHeader>
