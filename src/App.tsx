@@ -18,6 +18,7 @@ import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import TestSeriesTest from "./pages/TestSeriesTest";
 import CurrentAffairs from "./pages/CurrentAffairs";
+import CurrentAffairsDetail from "./pages/CurrentAffairsDetail";
 import Chat from "./pages/Chat";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/study-materials/polity" element={<PolityApp />} />
             <Route path="/study-materials/ancient-history" element={<AncientHistoryStudy />} />
             <Route path="/current-affairs" element={<CurrentAffairs />} />
+            <Route path="/current-affairs/:id" element={<CurrentAffairsDetail />} />
             <Route path="/chat" element={<Chat />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

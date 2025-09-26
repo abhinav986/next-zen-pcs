@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Calendar, BookOpen, Target, Download, Clock } from "lucide-react";
 import { format } from "date-fns";
+import currentAffairsData from "@/data/currentAffairsData.json";
 
 // Mock data for current affairs articles
 const mockArticles = [
@@ -99,8 +101,8 @@ const difficulties = ["All", "Easy", "Medium", "Hard"];
 const gsPapers = ["All", "GS 1", "GS 2", "GS 3", "GS 4"];
 
 export default function CurrentAffairs() {
-  const [articles, setArticles] = useState(mockArticles);
-  const [filteredArticles, setFilteredArticles] = useState(mockArticles);
+  const [articles, setArticles] = useState(currentAffairsData);
+  const [filteredArticles, setFilteredArticles] = useState(currentAffairsData);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
@@ -117,102 +119,34 @@ export default function CurrentAffairs() {
       );
     }
 
-    if (selectedSubject !== "All") {
-      filtered = filtered.filter(article =>
-        article.subjects.includes(selectedSubject)
-      );
-    }
-
-    if (selectedDifficulty !== "All") {
-      filtered = filtered.filter(article =>
-        article.difficulty.toLowerCase() === selectedDifficulty.toLowerCase()
-      );
-    }
-
-    if (selectedGsPaper !== "All") {
-      const paperNum = parseInt(selectedGsPaper.split(" ")[1]);
-      filtered = filtered.filter(article =>
-        article.gsPaper.includes(paperNum)
-      );
-    }
+    // Note: For simplicity, we're not filtering by subject, difficulty, or GS paper
+    // as the JSON structure is focused on detailed content rather than metadata
+    // You can add these properties to the JSON structure if needed
 
     setFilteredArticles(filtered);
-  }, [searchTerm, selectedSubject, selectedDifficulty, selectedGsPaper, articles]);
+  }, [searchTerm, articles]);
 
   const ArticleCard = ({ article }: { article: any }) => (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader>
-        <div className="flex justify-between items-start mb-2">
-          <div className="flex flex-wrap gap-1 mb-2">
-            {article.subjects.map((subject: string) => (
-              <Badge key={subject} variant="secondary" className="text-xs">
-                {subject}
-              </Badge>
-            ))}
-            {article.gsPaper.map((paper: number) => (
-              <Badge key={paper} variant="outline" className="text-xs">
-                GS {paper}
-              </Badge>
-            ))}
-          </div>
-          <Badge 
-            variant={article.difficulty === "easy" ? "default" : 
-                   article.difficulty === "medium" ? "secondary" : "destructive"}
-            className="text-xs"
-          >
-            {article.difficulty}
-          </Badge>
-        </div>
+        {article.image && (
+          <img 
+            src={article.image} 
+            alt={article.title}
+            className="w-full h-48 object-cover rounded-lg mb-4"
+          />
+        )}
         <CardTitle className="text-lg leading-tight">{article.title}</CardTitle>
         <CardDescription className="text-sm">{article.summary}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
-          <div className="flex items-center gap-4">
-            <span>{article.source.name}</span>
-            <span className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              {format(article.publishedAt, "dd MMM yyyy")}
-            </span>
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {article.readingTime} min read
-            </span>
-          </div>
-        </div>
-        
-        {/* MCQ Preview */}
-        {article.mcqs && article.mcqs.length > 0 && (
-          <div className="mb-4 p-3 bg-muted rounded-lg">
-            <p className="font-medium text-sm mb-2">Practice Question:</p>
-            <p className="text-sm">{article.mcqs[0].question}</p>
-            <div className="grid grid-cols-2 gap-1 mt-2">
-              {article.mcqs[0].options.map((option: string, index: number) => (
-                <Button key={index} variant="ghost" size="sm" className="text-xs justify-start">
-                  {String.fromCharCode(65 + index)}. {option}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Mains Pointers */}
-        {article.mainsPointers && article.mainsPointers.length > 0 && (
-          <div className="mb-4">
-            <p className="font-medium text-sm mb-2">Mains Pointers:</p>
-            <ul className="text-sm text-muted-foreground">
-              {article.mainsPointers.slice(0, 2).map((pointer: string, index: number) => (
-                <li key={index} className="mb-1">• {pointer}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
         <div className="flex gap-2">
-          <Button size="sm" className="flex-1">
-            <BookOpen className="h-3 w-3 mr-1" />
-            Read Full Article
-          </Button>
+          <Link to={article.url} className="flex-1">
+            <Button size="sm" className="w-full">
+              <BookOpen className="h-3 w-3 mr-1" />
+              Read Full Article
+            </Button>
+          </Link>
           <Button size="sm" variant="outline">
             <Target className="h-3 w-3 mr-1" />
             Quiz
@@ -246,7 +180,7 @@ export default function CurrentAffairs() {
           </TabsList>
 
           <TabsContent value="daily" className="space-y-6">
-            {/* Filters */}
+            {/* Search */}
             <div className="flex flex-col md:flex-row gap-4 p-4 bg-muted rounded-lg">
               <div className="flex-1">
                 <div className="relative">
@@ -259,36 +193,6 @@ export default function CurrentAffairs() {
                   />
                 </div>
               </div>
-              <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Subject" />
-                </SelectTrigger>
-                <SelectContent>
-                  {subjects.map(subject => (
-                    <SelectItem key={subject} value={subject}>{subject}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={selectedGsPaper} onValueChange={setSelectedGsPaper}>
-                <SelectTrigger className="w-full md:w-32">
-                  <SelectValue placeholder="GS Paper" />
-                </SelectTrigger>
-                <SelectContent>
-                  {gsPapers.map(paper => (
-                    <SelectItem key={paper} value={paper}>{paper}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-                <SelectTrigger className="w-full md:w-32">
-                  <SelectValue placeholder="Difficulty" />
-                </SelectTrigger>
-                <SelectContent>
-                  {difficulties.map(difficulty => (
-                    <SelectItem key={difficulty} value={difficulty}>{difficulty}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Articles Grid */}
@@ -331,7 +235,7 @@ export default function CurrentAffairs() {
                   <CardHeader>
                     <CardTitle className="text-lg">{subject}</CardTitle>
                     <CardDescription>
-                      {filteredArticles.filter(article => article.subjects.includes(subject)).length} articles
+                      {filteredArticles.length} articles
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
