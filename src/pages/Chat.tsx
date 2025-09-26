@@ -466,9 +466,23 @@ const Chat: React.FC = () => {
     setEditContent('');
   };
 
+  const getShortName = (displayName: string | null | undefined): string => {
+    if (!displayName || displayName === 'Anonymous') return 'A';
+    
+    const names = displayName.trim().split(' ');
+    if (names.length === 1) {
+      // Single name - return first 2 characters
+      return names[0].substring(0, 2).toUpperCase();
+    } else {
+      // Multiple names - return initials
+      return names.map(name => name.charAt(0)).join('').toUpperCase();
+    }
+  };
+
   const renderMessage = (message: ChatMessage) => {
     const isOwnMessage = user && message.user_id === user.id;
     const displayName = message.profiles?.display_name || 'Anonymous';
+    const shortName = getShortName(displayName);
     const likes = message.likes || [];
     const comments = message.comments || [];
     const isEditing = editingMessage === message.id;
@@ -487,11 +501,16 @@ const Chat: React.FC = () => {
         <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
           <Card className="max-w-xs md:max-w-lg p-4 bg-gray-50 border-gray-200">
             <div className="flex justify-between items-start mb-2">
-              <div className="text-xs text-gray-600 flex-1">
-                {displayName} • {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-                {message.is_edited && message.edited_at && (
-                  <span className="ml-2 italic">(edited {formatDistanceToNow(new Date(message.edited_at), { addSuffix: true })})</span>
-                )}
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
+                  {shortName}
+                </div>
+                <div className="text-xs text-gray-600">
+                  {displayName} • {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                  {message.is_edited && message.edited_at && (
+                    <span className="ml-2 italic">(edited {formatDistanceToNow(new Date(message.edited_at), { addSuffix: true })})</span>
+                  )}
+                </div>
               </div>
               
               {/* Edit/Delete buttons for own messages */}
@@ -696,8 +715,13 @@ const Chat: React.FC = () => {
 
                       return (
                         <div key={comment.id} className="bg-white p-3 rounded border text-sm">
-                          <div className="text-xs text-gray-600 mb-1">
-                            {comment.profiles?.display_name || 'Anonymous'} • {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="h-6 w-6 rounded-full bg-secondary/50 flex items-center justify-center text-xs font-medium text-secondary-foreground">
+                              {getShortName(comment.profiles?.display_name)}
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              {comment.profiles?.display_name || 'Anonymous'} • {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                            </div>
                           </div>
                           <div className="mb-2">{comment.content}</div>
                           
