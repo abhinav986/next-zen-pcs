@@ -279,6 +279,14 @@ export default function CurrentAffairsDetail() {
                         {details.sample_questions.mains.structured_answer && (
                           <div className="space-y-2 text-xs text-muted-foreground">
                             <p><strong>Introduction:</strong> {details.sample_questions.mains.structured_answer.introduction}</p>
+                            {details.sample_questions.mains.structured_answer.body && (
+                              <div className="space-y-1">
+                                <p><strong>Body:</strong></p>
+                                {Object.entries(details.sample_questions.mains.structured_answer.body).map(([key, value]) => (
+                                  <p key={key} className="ml-2">• {value}</p>
+                                ))}
+                              </div>
+                            )}
                             <p><strong>Conclusion:</strong> {details.sample_questions.mains.structured_answer.conclusion}</p>
                           </div>
                         )}
