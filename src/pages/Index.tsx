@@ -1,7 +1,7 @@
 import { SEOHead } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target, BookOpen, Trophy, Users, ArrowRight } from "lucide-react";
+import { Target, BookOpen, Trophy, Users, ArrowRight, MessageCircle, Newspaper } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Index = () => {
@@ -128,6 +128,56 @@ const Index = () => {
                     <li>✓ Weakness Identification</li>
                     <li>✓ Progress Reports</li>
                   </ul>
+                </CardContent>
+              </Card>
+
+              <Card className="text-center hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="mx-auto h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                    <MessageCircle className="h-8 w-8 text-primary" />
+                  </div>
+                  <CardTitle className="text-xl">AI Chat Support</CardTitle>
+                  <CardDescription>
+                    Get instant help and guidance from our AI assistant for your preparation
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="text-sm text-muted-foreground space-y-2">
+                    <li>✓ 24/7 Availability</li>
+                    <li>✓ Subject Guidance</li>
+                    <li>✓ Doubt Resolution</li>
+                    <li>✓ Study Planning</li>
+                  </ul>
+                  <Button asChild className="mt-4 w-full">
+                    <Link to="/chat">
+                      Start Chat
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="text-center hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="mx-auto h-16 w-16 bg-secondary/50 rounded-full flex items-center justify-center mb-4">
+                    <Newspaper className="h-8 w-8 text-secondary-foreground" />
+                  </div>
+                  <CardTitle className="text-xl">Current Affairs</CardTitle>
+                  <CardDescription>
+                    Stay updated with latest current affairs and their UPSC relevance
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="text-sm text-muted-foreground space-y-2">
+                    <li>✓ Daily Updates</li>
+                    <li>✓ UPSC Analysis</li>
+                    <li>✓ Monthly Compilation</li>
+                    <li>✓ Subject-wise Coverage</li>
+                  </ul>
+                  <Button asChild variant="outline" className="mt-4 w-full">
+                    <Link to="/current-affairs">
+                      Explore Articles
+                    </Link>
+                  </Button>
                 </CardContent>
               </Card>
             </div>
