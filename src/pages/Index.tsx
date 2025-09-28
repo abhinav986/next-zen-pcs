@@ -1,33 +1,11 @@
-import { SEOHead } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Target, BookOpen, Trophy, Users, ArrowRight, MessageCircle, Newspaper } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Index = () => {
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "EducationalOrganization",
-    "name": "UPSC Prep Academy",
-    "description": "Comprehensive UPSC preparation platform with test series and study materials",
-    "url": "https://upsc-prep-academy.lovable.app",
-    "educationalUse": "UPSC Preparation",
-    "offers": {
-      "@type": "Course",
-      "name": "UPSC Civil Services Preparation",
-      "description": "Complete preparation course for UPSC Civil Services Examination"
-    }
-  };
-
   return (
     <>
-      <SEOHead
-        title="UPSC Prep Academy - Complete Civil Services Exam Preparation"
-        description="Master the UPSC Civil Services Examination with our comprehensive test series and study materials. Join thousands of aspirants preparing for IAS, IPS, IFS and other civil services."
-        keywords="UPSC preparation, civil services exam, IAS preparation, UPSC coaching online, test series, study materials"
-        structuredData={structuredData}
-      />
-      
       <div className="min-h-screen bg-background pt-16">
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-secondary/5">

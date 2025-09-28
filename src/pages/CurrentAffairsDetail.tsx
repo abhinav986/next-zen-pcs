@@ -20,12 +20,6 @@ export default function CurrentAffairsDetail() {
 
   return (
     <>
-      <Helmet>
-        <title>{article.title} - Current Affairs - UPSC Preparation</title>
-        <meta name="description" content={article.summary} />
-        <meta name="keywords" content="UPSC, current affairs, prelims, mains, GS papers" />
-      </Helmet>
-
       <main className="container mx-auto px-4 py-8">
         {/* Back Button */}
         <div className="mb-6">
