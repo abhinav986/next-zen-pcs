@@ -4,24 +4,48 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, BookOpen, Target, Calendar, MapPin, Bookmark, BookmarkCheck } from "lucide-react";
+import { ArrowLeft, ExternalLink, BookOpen, Target, Calendar, MapPin, Bookmark, BookmarkCheck, Star, Download, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import currentAffairsData from "@/data/currentAffairsData.json";
+import jsPDF from "jspdf";
+import { Document, Packer, Paragraph, TextRun } from "docx";
+import { saveAs } from "file-saver";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function CurrentAffairsDetail() {
   const { id } = useParams();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [bookmarkId, setBookmarkId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showBookmarks, setShowBookmarks] = useState(false);
+  const [bookmarkedPoints, setBookmarkedPoints] = useState<string[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   const article = currentAffairsData.find(item => item.id === id);
   
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   useEffect(() => {
     checkBookmarkStatus();
-  }, [id]);
+    loadBookmarkedPoints();
+  }, [id, isAuthenticated]);
 
   const checkBookmarkStatus = async () => {
     try {
@@ -44,6 +68,182 @@ export default function CurrentAffairsDetail() {
     } catch (error: any) {
       console.error('Error checking bookmark status:', error);
     }
+  };
+
+  // Load bookmarked points
+  const loadBookmarkedPoints = async () => {
+    if (!isAuthenticated) {
+      const localBookmarks = JSON.parse(localStorage.getItem(`current-affairs-${id}-bookmarks`) || '[]');
+      setBookmarkedPoints(localBookmarks);
+      return;
+    }
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('user_bookmarks')
+        .select('content')
+        .eq('user_id', user.id)
+        .eq('subject_id', 'current_affairs')
+        .eq('chapter_id', id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      setBookmarkedPoints(data?.map(b => b.content) || []);
+    } catch (error) {
+      console.error('Error loading bookmarked points:', error);
+    }
+  };
+
+  // Add a point to bookmarks
+  const addBookmark = async (point: string) => {
+    if (bookmarkedPoints.includes(point)) return;
+
+    if (!isAuthenticated) {
+      const localBookmarks = JSON.parse(localStorage.getItem(`current-affairs-${id}-bookmarks`) || '[]');
+      const updated = [...localBookmarks, point];
+      localStorage.setItem(`current-affairs-${id}-bookmarks`, JSON.stringify(updated));
+      setBookmarkedPoints(updated);
+      toast({
+        title: "Bookmark saved",
+        description: "Added to your bookmarks",
+      });
+      return;
+    }
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to bookmark",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('user_bookmarks')
+        .insert({
+          user_id: user.id,
+          subject_id: 'current_affairs',
+          chapter_id: id!,
+          content: point
+        });
+      
+      if (error) throw error;
+      
+      loadBookmarkedPoints();
+      toast({
+        title: "Bookmark saved",
+        description: "Added to your bookmarks",
+      });
+    } catch (error) {
+      console.error('Error saving bookmark:', error);
+    }
+  };
+
+  // Remove a bookmark
+  const removeBookmark = async (point: string, index: number) => {
+    if (!isAuthenticated) {
+      const localBookmarks = JSON.parse(localStorage.getItem(`current-affairs-${id}-bookmarks`) || '[]');
+      const updated = localBookmarks.filter((_: string, i: number) => i !== index);
+      localStorage.setItem(`current-affairs-${id}-bookmarks`, JSON.stringify(updated));
+      setBookmarkedPoints(updated);
+      return;
+    }
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('user_bookmarks')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('subject_id', 'current_affairs')
+        .eq('chapter_id', id)
+        .eq('content', point);
+      
+      if (error) throw error;
+      
+      loadBookmarkedPoints();
+    } catch (error) {
+      console.error('Error removing bookmark:', error);
+    }
+  };
+
+  // Export bookmarks to PDF
+  const exportBookmarksToPDF = () => {
+    if (bookmarkedPoints.length === 0) {
+      toast({
+        title: "No bookmarks",
+        description: "Add some bookmarks first",
+        variant: "destructive",
+      });
+      return;
+    }
+    const doc = new jsPDF();
+    doc.setFont("times", "normal");
+    doc.setFontSize(14);
+    doc.text(`Current Affairs Bookmarks - ${article?.title}`, 10, 10);
+    doc.setFontSize(12);
+
+    bookmarkedPoints.forEach((note, idx) => {
+      const yPos = 20 + idx * 10;
+      if (yPos > 280) return; // Prevent overflow
+      doc.text(`${idx + 1}. ${note.substring(0, 80)}`, 10, yPos);
+    });
+
+    doc.save(`Current-Affairs-${id}-Bookmarks.pdf`);
+  };
+
+  // Export bookmarks to DOCX
+  const exportBookmarksToDOCX = async () => {
+    if (bookmarkedPoints.length === 0) {
+      toast({
+        title: "No bookmarks",
+        description: "Add some bookmarks first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const doc = new Document({
+      sections: [
+        {
+          properties: {},
+          children: [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Current Affairs Bookmarks - ${article?.title}`,
+                  bold: true,
+                  size: 28,
+                }),
+              ],
+            }),
+            ...bookmarkedPoints.map(
+              (note, idx) =>
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: `${idx + 1}. ${note}`,
+                      size: 24,
+                    }),
+                  ],
+                })
+            ),
+          ],
+        },
+      ],
+    });
+
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, `Current-Affairs-${id}-Bookmarks.docx`);
   };
 
   const toggleBookmark = async () => {
@@ -110,9 +310,101 @@ export default function CurrentAffairsDetail() {
 
   const { details } = article;
 
+  // Helper to render clickable text that can be bookmarked
+  const BookmarkableText = ({ text }: { text: string }) => (
+    <span
+      onClick={() => addBookmark(text)}
+      className="cursor-pointer hover:bg-accent/30 px-1 rounded transition-colors"
+      title="Click to bookmark"
+    >
+      {text}
+    </span>
+  );
+
   return (
     <>
-      <main className="container mx-auto px-4 py-8">
+      {/* Floating Bookmarks Button */}
+      {!isMobile && (
+        <Button
+          onClick={() => setShowBookmarks(!showBookmarks)}
+          className="fixed top-5 right-6 z-50 rounded-full h-12 w-12 shadow-lg bg-card border-2"
+          size="icon"
+          variant="outline"
+        >
+          <Bookmark className="h-5 w-5" fill={showBookmarks ? "currentColor" : "none"} />
+        </Button>
+      )}
+
+      {isMobile && (
+        <Button
+          onClick={() => setShowBookmarks(!showBookmarks)}
+          className="fixed bottom-4 right-4 z-50 rounded-full h-14 w-14 shadow-xl hover:scale-110 transition-all duration-300 bg-secondary text-secondary-foreground hover:bg-secondary/80"
+          size="icon"
+        >
+          <Bookmark className="h-6 w-6" fill={showBookmarks ? "currentColor" : "none"} />
+        </Button>
+      )}
+
+      {/* Bookmarks Panel */}
+      {showBookmarks && (
+        <div className={`fixed bg-card border border-border rounded-lg shadow-2xl z-40 overflow-hidden ${
+          isMobile 
+            ? "bottom-24 left-4 right-4 max-h-[calc(100vh-12rem)]" 
+            : "top-20 right-6 w-80 max-h-96"
+        }`}>
+          <div className="p-4 border-b border-border bg-primary/5 flex justify-between items-center">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
+              <Star className="h-4 w-4 text-yellow-500" />
+              My Bookmarks ({bookmarkedPoints.length})
+            </h3>
+            <Button
+              onClick={() => setShowBookmarks(false)}
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="overflow-y-auto max-h-60 p-2">
+            {bookmarkedPoints.length === 0 ? (
+              <p className="text-muted-foreground text-sm p-4 text-center">
+                No bookmarks yet. Click on any point to save it.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {bookmarkedPoints.map((note, i) => (
+                  <div key={i} className="flex items-start gap-2 p-2 bg-accent/20 rounded text-sm">
+                    <span className="flex-1 text-foreground">{note}</span>
+                    <Button
+                      onClick={() => removeBookmark(note, i)}
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {bookmarkedPoints.length > 0 && (
+            <div className="p-3 border-t border-border bg-muted/20">
+              <div className="flex gap-2">
+                <Button onClick={exportBookmarksToPDF} size="sm" className="flex-1">
+                  <Download className="h-3 w-3 mr-1" /> PDF
+                </Button>
+                <Button onClick={exportBookmarksToDOCX} size="sm" variant="outline" className="flex-1">
+                  <Download className="h-3 w-3 mr-1" /> DOCX
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <main className="container mx-auto px-4 py-8 pb-24">
         {/* Back Button and Bookmark */}
         <div className="mb-6 flex justify-between items-center">
           <Link to="/current-affairs">
@@ -166,16 +458,18 @@ export default function CurrentAffairsDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-muted-foreground">{details.background.summary}</p>
+                <p className="text-muted-foreground">
+                  <BookmarkableText text={details.background.summary} />
+                </p>
                 <div className="grid gap-2">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm"><strong>Location:</strong> {details.background.location}</span>
+                    <span className="text-sm"><strong>Location:</strong> <BookmarkableText text={details.background.location} /></span>
                   </div>
                   {details.background.related_conflict && (
                     <div className="flex items-start gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground mt-0.5" />
-                      <span className="text-sm"><strong>Related Event:</strong> {details.background.related_conflict}</span>
+                      <span className="text-sm"><strong>Related Event:</strong> <BookmarkableText text={details.background.related_conflict} /></span>
                     </div>
                   )}
                 </div>
@@ -194,7 +488,7 @@ export default function CurrentAffairsDetail() {
                     <h4 className="font-semibold mb-2">Objectives:</h4>
                     <ul className="space-y-1">
                       {details.exercise_details.objectives.map((objective, index) => (
-                        <li key={index} className="text-sm text-muted-foreground">• {objective}</li>
+                        <li key={index} className="text-sm text-muted-foreground">• <BookmarkableText text={objective} /></li>
                       ))}
                     </ul>
                   </div>
@@ -206,7 +500,7 @@ export default function CurrentAffairsDetail() {
                     <h4 className="font-semibold mb-2">Expected Outcomes:</h4>
                     <ul className="space-y-1">
                       {details.exercise_details.expected_outcomes.map((outcome, index) => (
-                        <li key={index} className="text-sm text-muted-foreground">• {outcome}</li>
+                        <li key={index} className="text-sm text-muted-foreground">• <BookmarkableText text={outcome} /></li>
                       ))}
                     </ul>
                   </div>
@@ -233,7 +527,7 @@ export default function CurrentAffairsDetail() {
                     <h4 className="font-semibold mb-2">Components:</h4>
                     <ul className="space-y-1">
                       {details.sudarshan_chakra.components.map((component, index) => (
-                        <li key={index} className="text-sm text-muted-foreground">• {component}</li>
+                        <li key={index} className="text-sm text-muted-foreground">• <BookmarkableText text={component} /></li>
                       ))}
                     </ul>
                   </div>
@@ -255,7 +549,7 @@ export default function CurrentAffairsDetail() {
                       <h4 className="font-semibold mb-2">Recent Milestones:</h4>
                       <ul className="space-y-1">
                         {details.sudarshan_chakra.recent_milestones.map((milestone, index) => (
-                          <li key={index} className="text-sm text-muted-foreground">• {milestone}</li>
+                          <li key={index} className="text-sm text-muted-foreground">• <BookmarkableText text={milestone} /></li>
                         ))}
                       </ul>
                     </div>
@@ -273,7 +567,7 @@ export default function CurrentAffairsDetail() {
                 <CardContent>
                   <ul className="space-y-2">
                     {details.strategic_significance.map((point, index) => (
-                      <li key={index} className="text-sm text-muted-foreground">• {point}</li>
+                      <li key={index} className="text-sm text-muted-foreground">• <BookmarkableText text={point} /></li>
                     ))}
                   </ul>
                 </CardContent>
@@ -289,7 +583,7 @@ export default function CurrentAffairsDetail() {
                 <CardContent>
                   <ul className="space-y-2">
                     {details.challenges.map((challenge, index) => (
-                      <li key={index} className="text-sm text-muted-foreground">• {challenge}</li>
+                      <li key={index} className="text-sm text-muted-foreground">• <BookmarkableText text={challenge} /></li>
                     ))}
                   </ul>
                 </CardContent>
