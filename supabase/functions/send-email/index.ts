@@ -1,7 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,30 +26,44 @@ const handler = async (req: Request): Promise<Response> => {
     // Convert plain text message to HTML with line breaks
     const htmlMessage = message.replace(/\n/g, '<br>');
 
-    const emailResponse = await resend.emails.send({
-      from: "UPSC Prep Academy <noreply@resend.dev>",
-      to: [email],
-      subject: subject,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0;">
-            <h1 style="margin: 0; font-size: 24px;">UPSC Prep Academy</h1>
-          </div>
-          <div style="background: #f9f9f9; padding: 20px; border-radius: 0 0 10px 10px; border: 1px solid #e0e0e0;">
-            <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea;">
-              ${htmlMessage}
+    // Use Resend API directly with fetch
+    const resendResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get("RESEND_API_KEY")}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: "UPSC Prep Academy <onboarding@resend.dev>",
+        to: [email],
+        subject: subject,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0;">
+              <h1 style="margin: 0; font-size: 24px;">UPSC Prep Academy</h1>
             </div>
-            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #666;">
-              <p style="margin: 0; font-size: 14px;">
-                This email was sent from UPSC Prep Academy. 
-                <br>
-                Continue your preparation journey with us!
-              </p>
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 0 0 10px 10px; border: 1px solid #e0e0e0;">
+              <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea;">
+                ${htmlMessage}
+              </div>
+              <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #666;">
+                <p style="margin: 0; font-size: 14px;">
+                  This email was sent from UPSC Prep Academy. 
+                  <br>
+                  Continue your preparation journey with us!
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      `,
+        `,
+      }),
     });
+
+    const emailResponse = await resendResponse.json();
+
+    if (!resendResponse.ok) {
+      throw new Error(`Resend API error: ${JSON.stringify(emailResponse)}`);
+    }
 
     console.log("Email sent successfully:", emailResponse);
 

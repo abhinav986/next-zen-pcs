@@ -1,16 +1,108 @@
 import { useParams, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, BookOpen, Target, Calendar, MapPin } from "lucide-react";
+import { ArrowLeft, ExternalLink, BookOpen, Target, Calendar, MapPin, Bookmark, BookmarkCheck } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import currentAffairsData from "@/data/currentAffairsData.json";
 
 export default function CurrentAffairsDetail() {
   const { id } = useParams();
+  const { toast } = useToast();
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkId, setBookmarkId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   
   const article = currentAffairsData.find(item => item.id === id);
+  
+  useEffect(() => {
+    checkBookmarkStatus();
+  }, [id]);
+
+  const checkBookmarkStatus = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('current_affairs_bookmarks')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('article_id', id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data) {
+        setIsBookmarked(true);
+        setBookmarkId(data.id);
+      }
+    } catch (error: any) {
+      console.error('Error checking bookmark status:', error);
+    }
+  };
+
+  const toggleBookmark = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to bookmark articles",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (isBookmarked && bookmarkId) {
+        const { error } = await supabase
+          .from('current_affairs_bookmarks')
+          .delete()
+          .eq('id', bookmarkId);
+
+        if (error) throw error;
+
+        setIsBookmarked(false);
+        setBookmarkId(null);
+        toast({
+          title: "Bookmark removed",
+          description: "Article removed from bookmarks",
+        });
+      } else {
+        const { data, error } = await supabase
+          .from('current_affairs_bookmarks')
+          .insert([
+            { user_id: user.id, article_id: id }
+          ])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        setIsBookmarked(true);
+        setBookmarkId(data.id);
+        toast({
+          title: "Bookmarked",
+          description: "Article saved to bookmarks",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error toggling bookmark:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update bookmark",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
   
   if (!article) {
     return <Navigate to="/current-affairs" replace />;
@@ -21,14 +113,32 @@ export default function CurrentAffairsDetail() {
   return (
     <>
       <main className="container mx-auto px-4 py-8">
-        {/* Back Button */}
-        <div className="mb-6">
+        {/* Back Button and Bookmark */}
+        <div className="mb-6 flex justify-between items-center">
           <Link to="/current-affairs">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Current Affairs
             </Button>
           </Link>
+          <Button 
+            variant={isBookmarked ? "default" : "outline"}
+            size="sm"
+            onClick={toggleBookmark}
+            disabled={loading}
+          >
+            {isBookmarked ? (
+              <>
+                <BookmarkCheck className="h-4 w-4 mr-2" />
+                Bookmarked
+              </>
+            ) : (
+              <>
+                <Bookmark className="h-4 w-4 mr-2" />
+                Bookmark
+              </>
+            )}
+          </Button>
         </div>
 
         {/* Header */}
