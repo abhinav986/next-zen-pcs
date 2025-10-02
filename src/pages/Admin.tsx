@@ -16,6 +16,7 @@ import { upscSubjects } from "@/data/upscSubjects";
 import { useToast } from "@/hooks/use-toast";
 import { CurrentAffairsNotifier } from "@/components/CurrentAffairsNotifier";
 import CustomEmailSender from "@/components/CustomEmailSender";
+import WeakSectionEmailPanel from "@/components/WeakSectionEmailPanel";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -428,6 +429,7 @@ const Admin = () => {
               <TabsTrigger value="tests">Test Series</TabsTrigger>
               <TabsTrigger value="questions">Questions</TabsTrigger>
               <TabsTrigger value="notifications">Current Affairs</TabsTrigger>
+              <TabsTrigger value="weak-sections">Weak Sections</TabsTrigger>
               <TabsTrigger value="custom-emails">Custom Emails</TabsTrigger>
             </TabsList>
 
@@ -1079,6 +1081,15 @@ const Admin = () => {
                 <div>
                   <h2 className="text-2xl font-semibold mb-4">Current Affairs Notifications</h2>
                   <CurrentAffairsNotifier />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="weak-sections">
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-semibold mb-4">Weak Section Reports</h2>
+                  <WeakSectionEmailPanel />
                 </div>
               </div>
             </TabsContent>
