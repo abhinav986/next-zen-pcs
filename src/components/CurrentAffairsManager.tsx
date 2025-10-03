@@ -28,17 +28,19 @@ export function CurrentAffairsManager() {
       // Ensure it's an array
       const articles = Array.isArray(parsedData) ? parsedData : [parsedData];
       
-      // Insert each article
+      // Upsert each article (insert or update if article_id exists)
       for (const article of articles) {
         const { error } = await supabase
           .from('current_affairs')
-          .insert({
+          .upsert({
             article_id: article.id,
             title: article.title,
             image: article.image,
             url: article.url,
             summary: article.summary,
             details: article.details,
+          }, {
+            onConflict: 'article_id'
           });
 
         if (error) {
@@ -48,7 +50,7 @@ export function CurrentAffairsManager() {
 
       toast({
         title: "Success",
-        description: `Successfully added ${articles.length} article(s)`,
+        description: `Successfully added/updated ${articles.length} article(s)`,
       });
       
       setJsonInput("");
