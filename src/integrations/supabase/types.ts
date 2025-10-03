@@ -187,6 +187,42 @@ export type Database = {
           },
         ]
       }
+      current_affairs: {
+        Row: {
+          article_id: string
+          created_at: string
+          details: Json
+          id: string
+          image: string | null
+          summary: string
+          title: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          details: Json
+          id?: string
+          image?: string | null
+          summary: string
+          title: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          image?: string | null
+          summary?: string
+          title?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       current_affairs_bookmarks: {
         Row: {
           article_id: string

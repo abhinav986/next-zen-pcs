@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CurrentAffairsNotifier } from "@/components/CurrentAffairsNotifier";
 import CustomEmailSender from "@/components/CustomEmailSender";
 import WeakSectionEmailPanel from "@/components/WeakSectionEmailPanel";
+import { CurrentAffairsManager } from "@/components/CurrentAffairsManager";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -428,9 +429,10 @@ const Admin = () => {
             <TabsList>
               <TabsTrigger value="tests">Test Series</TabsTrigger>
               <TabsTrigger value="questions">Questions</TabsTrigger>
-              <TabsTrigger value="notifications">Current Affairs</TabsTrigger>
+              <TabsTrigger value="notifications">Current Affairs Notifier</TabsTrigger>
               <TabsTrigger value="weak-sections">Weak Sections</TabsTrigger>
               <TabsTrigger value="custom-emails">Custom Emails</TabsTrigger>
+              <TabsTrigger value="current-affairs">Manage Current Affairs</TabsTrigger>
             </TabsList>
 
             <TabsContent value="tests">
@@ -1099,6 +1101,15 @@ const Admin = () => {
                 <div>
                   <h2 className="text-2xl font-semibold mb-4">Custom Email Campaign</h2>
                   <CustomEmailSender />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="current-affairs">
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-semibold mb-4">Manage Current Affairs</h2>
+                  <CurrentAffairsManager />
                 </div>
               </div>
             </TabsContent>

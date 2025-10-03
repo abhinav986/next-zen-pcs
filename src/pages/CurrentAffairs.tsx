@@ -7,40 +7,69 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Calendar, BookOpen, Target, Download, Clock } from "lucide-react";
+import { Search, Calendar, BookOpen, Target, Download, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
-import currentAffairsData from "@/data/currentAffairsData.json";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 
 const subjects = ["All", "Polity", "Economy", "Environment", "International Relations", "Science & Technology", "History", "Geography"];
 const difficulties = ["All", "Easy", "Medium", "Hard"];
 const gsPapers = ["All", "GS 1", "GS 2", "GS 3", "GS 4"];
+const ITEMS_PER_PAGE = 9;
 
 export default function CurrentAffairs() {
-  const [articles, setArticles] = useState(currentAffairsData);
-  const [filteredArticles, setFilteredArticles] = useState(currentAffairsData);
+  const [articles, setArticles] = useState<any[]>([]);
+  const [filteredArticles, setFilteredArticles] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
   const [selectedGsPaper, setSelectedGsPaper] = useState("All");
   const [activeTab, setActiveTab] = useState("daily");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Fetch articles from Supabase
   useEffect(() => {
-    let filtered = articles;
+    fetchArticles();
+  }, [currentPage, searchTerm]);
 
-    if (searchTerm) {
-      filtered = filtered.filter(article =>
-        article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        article.summary.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+  const fetchArticles = async () => {
+    setIsLoading(true);
+    try {
+      let query = supabase
+        .from('current_affairs')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
+
+      if (searchTerm) {
+        query = query.or(`title.ilike.%${searchTerm}%,summary.ilike.%${searchTerm}%`);
+      }
+
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+
+      setArticles(data || []);
+      setFilteredArticles(data || []);
+      setTotalCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching articles:', error);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    // Note: For simplicity, we're not filtering by subject, difficulty, or GS paper
-    // as the JSON structure is focused on detailed content rather than metadata
-    // You can add these properties to the JSON structure if needed
-
-    setFilteredArticles(filtered);
-  }, [searchTerm, articles]);
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   const ArticleCard = ({ article }: { article: any }) => (
     <Card className="hover:shadow-md transition-shadow">
@@ -112,11 +141,52 @@ export default function CurrentAffairs() {
             </div>
 
             {/* Articles Grid */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filteredArticles.map(article => (
-                <ArticleCard key={article.id} article={article} />
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="text-center py-12">Loading articles...</div>
+            ) : filteredArticles.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">No articles found.</div>
+            ) : (
+              <>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredArticles.map(article => (
+                    <ArticleCard key={article.id} article={article} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <Pagination className="mt-8">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                )}
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="monthly" className="space-y-6">
