@@ -65,12 +65,14 @@ export function TestQuestionsManager() {
           .insert({
             test_series_id: selectedTestSeriesId,
             question_text: question.question_text,
-            options: question.options,
+            question_type: question.question_type || 'multiple_choice',
+            options: question.question_type === 'true_false' 
+              ? ["True", "False"] 
+              : (question.options || ["", "", "", ""]),
             correct_answer: question.correct_answer,
             explanation: question.explanation,
             difficulty: question.difficulty || 'Medium',
             topic: question.topic,
-            question_type: question.question_type || 'mcq',
             question_order: question.question_order || 1,
           });
 
@@ -138,12 +140,12 @@ export function TestQuestionsManager() {
 [
   {
     "question_text": "What is the capital of India?",
-    "options": {"A": "Mumbai", "B": "Delhi", "C": "Kolkata", "D": "Chennai"},
-    "correct_answer": "B",
+    "question_type": "multiple_choice",
+    "options": ["Mumbai", "Delhi", "Kolkata", "Chennai"],
+    "correct_answer": "Delhi",
     "explanation": "New Delhi is the capital of India.",
-    "difficulty": "Easy",
+    "difficulty": "Medium",
     "topic": "Geography",
-    "question_type": "mcq",
     "question_order": 1
   }
 ]'
