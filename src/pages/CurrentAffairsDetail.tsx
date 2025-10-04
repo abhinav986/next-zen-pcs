@@ -8,7 +8,6 @@ import { ArrowLeft, ExternalLink, BookOpen, Target, Calendar, MapPin, Bookmark, 
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import currentAffairsData from "@/data/currentAffairsData.json";
 import jsPDF from "jspdf";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
@@ -24,8 +23,33 @@ export default function CurrentAffairsDetail() {
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [bookmarkedPoints, setBookmarkedPoints] = useState<string[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
-  const article = currentAffairsData.find(item => item.id === id);
+  const [article, setArticle] = useState<any>(null);
+  const [articleLoading, setArticleLoading] = useState(true);
+
+  // Fetch article from Supabase
+  useEffect(() => {
+    const fetchArticle = async () => {
+      try {
+        setArticleLoading(true);
+        const { data, error } = await supabase
+          .from('current_affairs')
+          .select('*')
+          .eq('article_id', id)
+          .single();
+
+        if (error) throw error;
+        setArticle(data);
+      } catch (error) {
+        console.error('Error fetching article:', error);
+      } finally {
+        setArticleLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchArticle();
+    }
+  }, [id]);
   
   // Check authentication status
   useEffect(() => {
@@ -304,11 +328,19 @@ export default function CurrentAffairsDetail() {
     }
   };
   
+  if (articleLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <p className="text-center text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
   if (!article) {
     return <Navigate to="/current-affairs" replace />;
   }
 
-  const { details } = article;
+  const details = article.details;
 
   // Helper to render clickable text that can be bookmarked
   const BookmarkableText = ({ text }: { text: string }) => (
@@ -538,7 +570,7 @@ export default function CurrentAffairsDetail() {
                         {Object.entries(details.sudarshan_chakra.related_projects).map(([project, description]) => (
                           <div key={project}>
                             <strong className="text-sm">{project.replace(/_/g, ' ')}:</strong>
-                            <p className="text-sm text-muted-foreground">{description}</p>
+                            <p className="text-sm text-muted-foreground">{String(description)}</p>
                           </div>
                         ))}
                       </div>
@@ -600,7 +632,7 @@ export default function CurrentAffairsDetail() {
                   {Object.entries(details.future_outlook).map(([key, value]) => (
                     <div key={key}>
                       <strong className="text-sm capitalize">{key.replace(/_/g, ' ')}:</strong>
-                      <p className="text-sm text-muted-foreground">{value}</p>
+                      <p className="text-sm text-muted-foreground">{String(value)}</p>
                     </div>
                   ))}
                 </CardContent>
@@ -681,7 +713,7 @@ export default function CurrentAffairsDetail() {
                               <div className="space-y-1">
                                 <p><strong>Body:</strong></p>
                                 {Object.entries(details.sample_questions.mains.structured_answer.body).map(([key, value]) => (
-                                  <p key={key} className="ml-2">• {value}</p>
+                                  <p key={key} className="ml-2">• {String(value)}</p>
                                 ))}
                               </div>
                             )}
