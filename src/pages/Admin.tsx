@@ -59,6 +59,7 @@ const Admin = () => {
   const [editingTest, setEditingTest] = useState<TestSeries | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<TestQuestion | null>(null);
   const [loading, setLoading] = useState(true);
+  const [subjectFilter, setSubjectFilter] = useState<string>("all");
   const { toast } = useToast();
 
   const [newTest, setNewTest] = useState<Partial<TestSeries>>({
@@ -439,9 +440,23 @@ const Admin = () => {
 
             <TabsContent value="tests">
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <h2 className="text-2xl font-semibold">Test Series</h2>
-                  <Dialog open={isAddingTest} onOpenChange={setIsAddingTest}>
+                  <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                    <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+                      <SelectTrigger className="w-full sm:w-48">
+                        <SelectValue placeholder="Filter by subject" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Subjects</SelectItem>
+                        {upscSubjects.map((subject) => (
+                          <SelectItem key={subject.id} value={subject.id}>
+                            {subject.icon} {subject.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Dialog open={isAddingTest} onOpenChange={setIsAddingTest}>
                     <DialogTrigger asChild>
                       <Button>
                         <Plus className="h-4 w-4 mr-2" />
@@ -538,10 +553,13 @@ const Admin = () => {
                       </div>
                     </DialogContent>
                   </Dialog>
+                  </div>
                 </div>
 
                 <div className="grid gap-4">
-                  {testSeries.map((test) => (
+                  {testSeries
+                    .filter(test => subjectFilter === "all" || test.subject_id === subjectFilter)
+                    .map((test) => (
                     <Card key={test.id}>
                       <CardHeader>
                         <div className="flex items-start justify-between">
@@ -626,12 +644,27 @@ const Admin = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <h2 className="text-2xl font-semibold">Questions</h2>
                   <div className="flex flex-col sm:flex-row gap-4">
+                    <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+                      <SelectTrigger className="w-full sm:w-48">
+                        <SelectValue placeholder="Filter by subject" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Subjects</SelectItem>
+                        {upscSubjects.map((subject) => (
+                          <SelectItem key={subject.id} value={subject.id}>
+                            {subject.icon} {subject.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Select value={selectedTestId} onValueChange={setSelectedTestId}>
                       <SelectTrigger className="w-full sm:w-64">
                         <SelectValue placeholder="Select test series" />
                       </SelectTrigger>
                       <SelectContent>
-                        {testSeries.map((test) => (
+                        {testSeries
+                          .filter(test => subjectFilter === "all" || test.subject_id === subjectFilter)
+                          .map((test) => (
                           <SelectItem key={test.id} value={test.id}>
                             {test.title}
                           </SelectItem>
