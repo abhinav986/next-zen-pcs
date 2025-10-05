@@ -62,7 +62,7 @@ export function TestQuestionsManager() {
       for (const question of questions) {
         const { error } = await supabase
           .from('test_questions')
-          .insert({
+          .insert([{
             test_series_id: selectedTestSeriesId,
             question_text: question.question_text,
             question_type: question.question_type || 'multiple_choice',
@@ -74,7 +74,9 @@ export function TestQuestionsManager() {
             difficulty: question.difficulty || 'Medium',
             topic: question.topic,
             question_order: question.question_order || 1,
-          });
+          }])
+          .select()
+          .single();
 
         if (error) {
           throw error;
