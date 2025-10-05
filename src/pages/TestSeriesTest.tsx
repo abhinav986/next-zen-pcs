@@ -6,13 +6,96 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, CheckCircle, XCircle, ArrowLeft, BookOpen, SkipForward, SkipBack, Pause, Play, TrendingUp, Calendar } from "lucide-react";
+import { Clock, CheckCircle, XCircle, ArrowLeft, BookOpen, SkipForward, SkipBack, Pause, Play, TrendingUp, Calendar, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
 import { QuestionNavigation } from "@/components/QuestionNavigation";
 import { User, Session } from "@supabase/supabase-js";
 import { sendTestNotification } from "@/utils/emailNotifications";
+
+// Weak Sections Report Component
+const WeakSectionsReport = ({ userId, testName }: { userId: string; testName: string }) => {
+  const [weakSections, setWeakSections] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchWeakSections = async () => {
+      if (!userId || !testName) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('weak_sections')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('test_name', testName)
+          .eq('is_weak', true)
+          .order('accuracy_percentage', { ascending: true });
+
+        if (error) throw error;
+        setWeakSections(data || []);
+      } catch (error) {
+        console.error('Error fetching weak sections:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWeakSections();
+  }, [userId, testName]);
+
+  if (loading) {
+    return (
+      <Card className="mt-6">
+        <CardContent className="pt-6">
+          <div className="text-center text-muted-foreground">Loading weak sections...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (weakSections.length === 0) {
+    return (
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-green-600">
+            <CheckCircle className="w-5 h-5" />
+            No Weak Sections!
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">Great job! You don't have any weak sections in this test.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 text-orange-600" />
+          Recent Weak Sections Report
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {weakSections.map((section) => (
+            <div key={section.id} className="p-3 border rounded-lg bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800">
+              <div className="flex justify-between items-start mb-2">
+                <h4 className="font-medium">{section.section_name}</h4>
+                <span className="text-sm font-bold text-orange-600">
+                  {section.accuracy_percentage.toFixed(1)}%
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">{section.recommendation}</p>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 interface TestQuestion {
   id: string;
@@ -317,13 +400,18 @@ const handleNextQuestion = () => {
           await storeSectionPerformance(attemptData.id, finalAnswers);
           await storeWeakSections(attemptData.id, finalAnswers);
           
-          // Send WhatsApp notification about test completion
-          await sendTestNotification(
-            user.id, 
-            testSeries?.title || 'Test', 
-            score, 
-            questions.length
-          );
+          // Send email notification about test completion
+          try {
+            await sendTestNotification(
+              user.id, 
+              testSeries?.title || 'Test', 
+              score, 
+              questions.length
+            );
+          } catch (emailError) {
+            console.error('Error sending test notification email:', emailError);
+            // Don't fail the whole submission if email fails
+          }
         }
 
         toast.success('Test results saved successfully!');
@@ -370,6 +458,25 @@ const handleNextQuestion = () => {
     const weakSections = getWeakSections();
     const sectionStats = getSectionWiseAnalysis();
     
+    // First, check and remove sections that are no longer weak (>= 70% accuracy)
+    const strongSections = Object.entries(sectionStats)
+      .filter(([_, stats]) => stats.percentage >= 70)
+      .map(([topic, _]) => topic);
+
+    if (strongSections.length > 0) {
+      try {
+        await supabase
+          .from('weak_sections')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('test_name', testSeries.title)
+          .in('section_name', strongSections);
+      } catch (error) {
+        console.error('Error removing improved sections:', error);
+      }
+    }
+
+    // Now insert or update weak sections
     const weakSectionData = weakSections.map(topic => ({
       user_id: user.id,
       test_attempt_id: testAttemptId,
@@ -380,16 +487,27 @@ const handleNextQuestion = () => {
       is_weak: true
     }));
 
-    try {
-      const { error } = await supabase
-        .from('weak_sections')
-        .insert(weakSectionData);
+    if (weakSectionData.length > 0) {
+      try {
+        // First delete existing weak sections for this test
+        await supabase
+          .from('weak_sections')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('test_name', testSeries.title)
+          .in('section_name', weakSections);
 
-      if (error) {
+        // Then insert new data
+        const { error } = await supabase
+          .from('weak_sections')
+          .insert(weakSectionData);
+
+        if (error) {
+          console.error('Error storing weak sections:', error);
+        }
+      } catch (error) {
         console.error('Error storing weak sections:', error);
       }
-    } catch (error) {
-      console.error('Error storing weak sections:', error);
     }
   };
 
@@ -763,27 +881,46 @@ const handleNextQuestion = () => {
                 <CardContent>
                   {previousAttempts.length > 0 ? (
                     <div className="space-y-4">
-                      {previousAttempts.map((attempt, index) => (
-                        <div key={attempt.id} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium">Attempt {previousAttempts.length - index}</span>
-                              <span className={`text-sm font-bold ${getScoreColor(getPercentageForAttempt(attempt))}`}>
-                                {getPercentageForAttempt(attempt)}%
-                              </span>
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {formatDateTime(attempt.completed_at)} • {attempt.score}/{attempt.total_questions} correct
-                            </div>
-                            {attempt.time_taken && (
-                              <div className="text-xs text-muted-foreground">
-                                Time: {formatTime(attempt.time_taken)}
+                      {previousAttempts.map((attempt, index) => {
+                        const attemptAnswers = typeof attempt.answers === 'string' ? JSON.parse(attempt.answers) : attempt.answers;
+                        return (
+                          <div key={attempt.id} className="p-4 border rounded-lg space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-medium">Attempt {previousAttempts.length - index}</span>
+                                  <span className={`text-sm font-bold ${getScoreColor(getPercentageForAttempt(attempt))}`}>
+                                    {getPercentageForAttempt(attempt)}%
+                                  </span>
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {formatDateTime(attempt.completed_at)} • {attempt.score}/{attempt.total_questions} correct
+                                </div>
+                                {attempt.time_taken && (
+                                  <div className="text-xs text-muted-foreground">
+                                    Time: {formatTime(attempt.time_taken)}
+                                  </div>
+                                )}
                               </div>
-                            )}
+                              <Progress value={getPercentageForAttempt(attempt)} className="w-20 h-2" />
+                            </div>
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                setUserAnswers(Array.isArray(attemptAnswers) ? attemptAnswers : []);
+                                setShowingPreviousResults(true);
+                                setShowResults(true);
+                              }}
+                              className="w-full"
+                            >
+                              <BookOpen className="w-3 h-3 mr-2" />
+                              View Full Scorecard
+                            </Button>
                           </div>
-                          <Progress value={getPercentageForAttempt(attempt)} className="w-20 h-2" />
-                        </div>
-                      ))}
+                        );
+                      })}
                       
                       <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                         <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Progress Summary</h4>
@@ -812,6 +949,9 @@ const handleNextQuestion = () => {
                           </div>
                         </div>
                       </div>
+
+                      {/* Recent Weak Sections Report */}
+                      <WeakSectionsReport userId={user?.id || ''} testName={testSeries?.title || ''} />
                     </div>
                   ) : (
                     <div className="text-center py-8">
@@ -858,6 +998,20 @@ const handleNextQuestion = () => {
                 <CardTitle>Test Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {previousAttempts.length > 0 && (
+                  <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                        You've taken this test before
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Best score: {Math.max(...previousAttempts.map(getPercentageForAttempt))}% • 
+                      Latest: {getPercentageForAttempt(previousAttempts[0])}%
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <div className="text-muted-foreground">Questions</div>
@@ -873,6 +1027,10 @@ const handleNextQuestion = () => {
                   <div>
                     <div className="text-muted-foreground">Difficulty</div>
                     <div className="font-bold">{testSeries.difficulty}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Max Score</div>
+                    <div className="font-bold">{testSeries.max_score || questions.length}</div>
                   </div>
                   <div>
                     <div className="text-muted-foreground">Type</div>
