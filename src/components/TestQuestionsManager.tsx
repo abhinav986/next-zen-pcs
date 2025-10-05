@@ -6,12 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload } from "lucide-react";
+import { upscSubjects } from "@/data/upscSubjects";
 
 export function TestQuestionsManager() {
   const [jsonInput, setJsonInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [testSeries, setTestSeries] = useState<any[]>([]);
   const [selectedTestSeriesId, setSelectedTestSeriesId] = useState<string>("");
+  const [subjectFilter, setSubjectFilter] = useState<string>("all");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -119,20 +121,40 @@ export function TestQuestionsManager() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <label className="text-sm font-medium mb-2 block">Select Test Series</label>
-          <Select value={selectedTestSeriesId} onValueChange={setSelectedTestSeriesId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a test series" />
-            </SelectTrigger>
-            <SelectContent>
-              {testSeries.map((series) => (
-                <SelectItem key={series.id} value={series.id}>
-                  {series.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium mb-2 block">Filter by Subject</label>
+            <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All subjects" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subjects</SelectItem>
+                {upscSubjects.map((subject) => (
+                  <SelectItem key={subject.id} value={subject.id}>
+                    {subject.icon} {subject.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-sm font-medium mb-2 block">Select Test Series</label>
+            <Select value={selectedTestSeriesId} onValueChange={setSelectedTestSeriesId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a test series" />
+              </SelectTrigger>
+              <SelectContent>
+                {testSeries
+                  .filter(series => subjectFilter === "all" || series.subject_id === subjectFilter)
+                  .map((series) => (
+                  <SelectItem key={series.id} value={series.id}>
+                    {series.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         
         <Textarea
