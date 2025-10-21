@@ -11,6 +11,7 @@ import { upscSubjects } from "@/data/upscSubjects";
 export function TestQuestionsUpdater() {
   const [jsonInput, setJsonInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingQuestions, setIsFetchingQuestions] = useState(false);
   const [testSeries, setTestSeries] = useState<any[]>([]);
   const [selectedTestSeriesId, setSelectedTestSeriesId] = useState<string>("");
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
@@ -32,6 +33,65 @@ export function TestQuestionsUpdater() {
     }
 
     setTestSeries(data || []);
+  };
+
+  const fetchQuestions = async () => {
+    if (!selectedTestSeriesId) {
+      toast({
+        title: "Error",
+        description: "Please select a test series first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsFetchingQuestions(true);
+      const { data, error } = await supabase
+        .from("test_questions")
+        .select("*")
+        .eq("test_series_id", selectedTestSeriesId)
+        .order("question_order", { ascending: true });
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        toast({
+          title: "No Questions Found",
+          description: "This test series has no questions yet",
+        });
+        setJsonInput("");
+        return;
+      }
+
+      // Format questions for display
+      const formattedQuestions = data.map(q => ({
+        question_text: q.question_text,
+        question_type: q.question_type,
+        options: q.options,
+        correct_answer: q.correct_answer,
+        explanation: q.explanation,
+        difficulty: q.difficulty,
+        topic: q.topic,
+        question_order: q.question_order,
+      }));
+
+      setJsonInput(JSON.stringify(formattedQuestions, null, 2));
+      
+      toast({
+        title: "Success",
+        description: `Loaded ${data.length} question(s)`,
+      });
+    } catch (error: any) {
+      console.error("Error fetching questions:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to fetch questions",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFetchingQuestions(false);
+    }
   };
 
   const handleUpdate = async () => {
@@ -164,8 +224,20 @@ export function TestQuestionsUpdater() {
           </div>
         </div>
         
-        <Textarea
-          placeholder='Paste JSON here... Example:
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Questions JSON</label>
+            <Button 
+              onClick={fetchQuestions} 
+              disabled={isFetchingQuestions || !selectedTestSeriesId}
+              variant="outline"
+              size="sm"
+            >
+              {isFetchingQuestions ? "Loading..." : "Load Existing Questions"}
+            </Button>
+          </div>
+          <Textarea
+            placeholder='Paste JSON here... Example:
 [
   {
     "question_text": "What is the capital of India?",
@@ -178,10 +250,11 @@ export function TestQuestionsUpdater() {
     "question_order": 1
   }
 ]'
-          value={jsonInput}
-          onChange={(e) => setJsonInput(e.target.value)}
-          className="min-h-[300px] font-mono text-sm"
-        />
+            value={jsonInput}
+            onChange={(e) => setJsonInput(e.target.value)}
+            className="min-h-[300px] font-mono text-sm"
+          />
+        </div>
         <Button onClick={handleUpdate} disabled={isLoading || !selectedTestSeriesId} variant="destructive">
           <RefreshCw className="h-4 w-4 mr-2" />
           {isLoading ? "Updating..." : "Update All Questions"}
