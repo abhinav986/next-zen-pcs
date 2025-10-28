@@ -407,6 +407,7 @@ export type Database = {
           completed_at: string
           id: string
           score: number
+          subject: string | null
           test_name: string
           time_taken: number | null
           total_questions: number
@@ -417,6 +418,7 @@ export type Database = {
           completed_at?: string
           id?: string
           score?: number
+          subject?: string | null
           test_name: string
           time_taken?: number | null
           total_questions: number
@@ -427,6 +429,7 @@ export type Database = {
           completed_at?: string
           id?: string
           score?: number
+          subject?: string | null
           test_name?: string
           time_taken?: number | null
           total_questions?: number
@@ -445,6 +448,7 @@ export type Database = {
           question_order: number | null
           question_text: string
           question_type: string | null
+          subTopic: string | null
           test_series_id: string | null
           topic: string | null
         }
@@ -458,6 +462,7 @@ export type Database = {
           question_order?: number | null
           question_text: string
           question_type?: string | null
+          subTopic?: string | null
           test_series_id?: string | null
           topic?: string | null
         }
@@ -471,6 +476,7 @@ export type Database = {
           question_order?: number | null
           question_text?: string
           question_type?: string | null
+          subTopic?: string | null
           test_series_id?: string | null
           topic?: string | null
         }
@@ -539,6 +545,7 @@ export type Database = {
           created_at: string
           id: string
           subject_id: string
+          topic: string | null
           user_id: string
         }
         Insert: {
@@ -547,6 +554,7 @@ export type Database = {
           created_at?: string
           id?: string
           subject_id: string
+          topic?: string | null
           user_id: string
         }
         Update: {
@@ -555,6 +563,7 @@ export type Database = {
           created_at?: string
           id?: string
           subject_id?: string
+          topic?: string | null
           user_id?: string
         }
         Relationships: []
@@ -603,8 +612,8 @@ export type Database = {
           is_weak: boolean
           recommendation: string | null
           section_name: string
-          test_attempt_id: string | null
-          test_name: string
+          sub_section_name: string
+          subject: string | null
           updated_at: string
           user_id: string
         }
@@ -615,8 +624,8 @@ export type Database = {
           is_weak?: boolean
           recommendation?: string | null
           section_name: string
-          test_attempt_id?: string | null
-          test_name: string
+          sub_section_name: string
+          subject?: string | null
           updated_at?: string
           user_id: string
         }
@@ -627,20 +636,12 @@ export type Database = {
           is_weak?: boolean
           recommendation?: string | null
           section_name?: string
-          test_attempt_id?: string | null
-          test_name?: string
+          sub_section_name?: string
+          subject?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "weak_sections_test_attempt_id_fkey"
-            columns: ["test_attempt_id"]
-            isOneToOne: false
-            referencedRelation: "test_attempts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
