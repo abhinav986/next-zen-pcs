@@ -194,10 +194,13 @@ export type Database = {
           details: Json
           id: string
           image: string | null
+          month: number | null
+          subject: string | null
           summary: string
           title: string
           updated_at: string
           url: string
+          year: number | null
         }
         Insert: {
           article_id: string
@@ -205,10 +208,13 @@ export type Database = {
           details: Json
           id?: string
           image?: string | null
+          month?: number | null
+          subject?: string | null
           summary: string
           title: string
           updated_at?: string
           url: string
+          year?: number | null
         }
         Update: {
           article_id?: string
@@ -216,10 +222,13 @@ export type Database = {
           details?: Json
           id?: string
           image?: string | null
+          month?: number | null
+          subject?: string | null
           summary?: string
           title?: string
           updated_at?: string
           url?: string
+          year?: number | null
         }
         Relationships: []
       }
