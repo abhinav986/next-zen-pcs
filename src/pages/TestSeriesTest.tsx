@@ -469,8 +469,8 @@ const handleNextQuestion = () => {
           .from('weak_sections')
           .delete()
           .eq('user_id', user.id)
-          .eq('test_name', testSeries.title)
-          .in('section_name', strongSections);
+          .eq('section_name', testSeries.title)
+          .in('sub_section_name', strongSections);
       } catch (error) {
         console.error('Error removing improved sections:', error);
       }
@@ -479,9 +479,9 @@ const handleNextQuestion = () => {
     // Now insert or update weak sections
     const weakSectionData = weakSections.map(topic => ({
       user_id: user.id,
-      test_attempt_id: testAttemptId,
-      test_name: testSeries.title,
-      section_name: topic,
+      section_name: testSeries.title,
+      sub_section_name: topic,
+      subject: testSeries.subject_id || 'General',
       accuracy_percentage: sectionStats[topic].percentage,
       recommendation: generateRecommendation(topic, sectionStats[topic]),
       is_weak: true
@@ -494,8 +494,8 @@ const handleNextQuestion = () => {
           .from('weak_sections')
           .delete()
           .eq('user_id', user.id)
-          .eq('test_name', testSeries.title)
-          .in('section_name', weakSections);
+          .eq('section_name', testSeries.title)
+          .in('sub_section_name', weakSections);
 
         // Then insert new data
         const { error } = await supabase

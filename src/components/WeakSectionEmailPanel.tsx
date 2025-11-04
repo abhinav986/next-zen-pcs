@@ -119,7 +119,7 @@ ${customMessage ? customMessage + "\n\n" : ""}`;
 
 `;
             weakSections.forEach((section, index) => {
-              message += `${index + 1}. ${section.section_name} (${section.test_name})
+              message += `${index + 1}. ${section.section_name} - ${section.sub_section_name}
    📉 Accuracy: ${Number(section.accuracy_percentage).toFixed(1)}%
    💡 ${section.recommendation || "Focus on this topic and practice more questions"}
 

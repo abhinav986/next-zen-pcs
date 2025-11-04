@@ -20,6 +20,7 @@ import WeakSectionEmailPanel from "@/components/WeakSectionEmailPanel";
 import { CurrentAffairsManager } from "@/components/CurrentAffairsManager";
 import { TestQuestionsManager } from "@/components/TestQuestionsManager";
 import { TestQuestionsUpdater } from "@/components/TestQuestionsUpdater";
+import { DailyQuizNotifier } from "@/components/admin/DailyQuizNotifier";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -435,6 +436,7 @@ const Admin = () => {
               <TabsTrigger value="notifications">Current Affairs Notifier</TabsTrigger>
               <TabsTrigger value="weak-sections">Weak Sections</TabsTrigger>
               <TabsTrigger value="custom-emails">Custom Emails</TabsTrigger>
+              <TabsTrigger value="push-notifications">Push Notifications</TabsTrigger>
           <TabsTrigger value="current-affairs">Manage Current Affairs</TabsTrigger>
           <TabsTrigger value="upload-questions">Upload Questions (JSON)</TabsTrigger>
           <TabsTrigger value="update-questions">Update Questions (JSON)</TabsTrigger>
@@ -1138,6 +1140,15 @@ const Admin = () => {
                 <div>
                   <h2 className="text-2xl font-semibold mb-4">Custom Email Campaign</h2>
                   <CustomEmailSender />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="push-notifications">
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-semibold mb-4">Push Notifications</h2>
+                  <DailyQuizNotifier />
                 </div>
               </div>
             </TabsContent>

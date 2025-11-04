@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { EmailSettings } from "@/components/EmailSettings";
+import { PushNotificationToggle } from "@/components/PushNotificationToggle";
 
 const Dashboard = () => {
   const [user, setUser] = useState<any>(null);
@@ -266,9 +267,10 @@ const Dashboard = () => {
             </Card>
           </section>
 
-          {/* WhatsApp Settings */}
-          <section className="mb-8">
+          {/* Notification Settings */}
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <EmailSettings />
+            <PushNotificationToggle />
           </section>
 
           {/* Quick Actions */}
