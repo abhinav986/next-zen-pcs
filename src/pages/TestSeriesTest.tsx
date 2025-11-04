@@ -28,7 +28,7 @@ const WeakSectionsReport = ({ userId, testName }: { userId: string; testName: st
           .from('weak_sections')
           .select('*')
           .eq('user_id', userId)
-          .eq('test_name', testName)
+          .eq('section_name', testName)
           .eq('is_weak', true)
           .order('accuracy_percentage', { ascending: true });
 
