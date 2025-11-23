@@ -21,6 +21,7 @@ import { CurrentAffairsManager } from "@/components/CurrentAffairsManager";
 import { TestQuestionsManager } from "@/components/TestQuestionsManager";
 import { TestQuestionsUpdater } from "@/components/TestQuestionsUpdater";
 import { DailyQuizNotifier } from "@/components/admin/DailyQuizNotifier";
+import { WeakSectionTelegramPanel } from "@/components/WeakSectionTelegramPanel";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -435,6 +436,7 @@ const Admin = () => {
               <TabsTrigger value="questions">Questions</TabsTrigger>
               <TabsTrigger value="notifications">Current Affairs Notifier</TabsTrigger>
               <TabsTrigger value="weak-sections">Weak Sections</TabsTrigger>
+              <TabsTrigger value="telegram-notifications">Telegram Notifications</TabsTrigger>
               <TabsTrigger value="custom-emails">Custom Emails</TabsTrigger>
               <TabsTrigger value="push-notifications">Push Notifications</TabsTrigger>
           <TabsTrigger value="current-affairs">Manage Current Affairs</TabsTrigger>
@@ -1131,6 +1133,15 @@ const Admin = () => {
                 <div>
                   <h2 className="text-2xl font-semibold mb-4">Weak Section Reports</h2>
                   <WeakSectionEmailPanel />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="telegram-notifications">
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-semibold mb-4">Telegram Notifications</h2>
+                  <WeakSectionTelegramPanel />
                 </div>
               </div>
             </TabsContent>
