@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Send } from "lucide-react";
 
 export const WeakSectionTelegramPanel = () => {
-  const [chatId, setChatId] = useState("");
   const [customMessage, setCustomMessage] = useState(
     "📊 Weak Section Analysis Report\n\nHello! Here are your areas that need improvement:"
   );
@@ -21,11 +20,12 @@ export const WeakSectionTelegramPanel = () => {
     try {
       const { count, error } = await supabase
         .from("profiles")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .not("telegram_chat_id", "is", null);
 
       if (error) throw error;
       setUserCount(count || 0);
-      toast.success(`Found ${count} users in the system`);
+      toast.success(`Found ${count} users with Telegram configured`);
     } catch (error) {
       console.error("Error fetching user count:", error);
       toast.error("Failed to fetch user count");
@@ -33,11 +33,6 @@ export const WeakSectionTelegramPanel = () => {
   };
 
   const sendWeakSectionReports = async () => {
-    if (!chatId.trim()) {
-      toast.error("Please enter a Telegram Chat ID");
-      return;
-    }
-
     if (!studyMaterialUrl.trim()) {
       toast.error("Please provide a study material URL");
       return;
@@ -48,15 +43,16 @@ export const WeakSectionTelegramPanel = () => {
     let errorCount = 0;
 
     try {
-      // Fetch all users
+      // Fetch users with telegram_chat_id
       const { data: users, error: usersError } = await supabase
         .from("profiles")
-        .select("user_id, display_name, email");
+        .select("user_id, display_name, email, telegram_chat_id")
+        .not("telegram_chat_id", "is", null);
 
       if (usersError) throw usersError;
 
       if (!users || users.length === 0) {
-        toast.error("No users found");
+        toast.error("No users with Telegram chat ID found. Users need to connect their Telegram first.");
         setLoading(false);
         return;
       }
@@ -101,10 +97,10 @@ export const WeakSectionTelegramPanel = () => {
           message += `\n📚 <b>Study Materials:</b>\n${studyMaterialUrl}\n\n`;
           message += `Keep practicing and you'll improve! 💪`;
 
-          // Send Telegram message
+          // Send Telegram message to user's chat_id
           const { error: sendError } = await supabase.functions.invoke("send-telegram", {
             body: {
-              chatId: chatId,
+              chatId: user.telegram_chat_id,
               message: message,
             },
           });
@@ -129,7 +125,6 @@ export const WeakSectionTelegramPanel = () => {
       );
 
       // Reset form
-      setChatId("");
       setCustomMessage("📊 Weak Section Analysis Report\n\nHello! Here are your areas that need improvement:");
       setStudyMaterialUrl("");
     } catch (error) {
@@ -149,17 +144,13 @@ export const WeakSectionTelegramPanel = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="chatId">Telegram Chat ID</Label>
-          <Input
-            id="chatId"
-            placeholder="Enter Telegram Chat ID (e.g., 123456789)"
-            value={chatId}
-            onChange={(e) => setChatId(e.target.value)}
-          />
-          <p className="text-sm text-muted-foreground">
-            Get your chat ID by messaging @userinfobot on Telegram
-          </p>
+        <div className="p-4 bg-muted rounded-lg">
+          <p className="text-sm font-medium mb-2">How it works:</p>
+          <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+            <li>Users must first chat with your Telegram bot and save their chat ID</li>
+            <li>Messages will be sent only to users with saved Telegram chat IDs</li>
+            <li>Each user receives personalized weak section analysis</li>
+          </ol>
         </div>
 
         <div className="space-y-2">
@@ -201,15 +192,14 @@ export const WeakSectionTelegramPanel = () => {
 
         <Button
           onClick={sendWeakSectionReports}
-          disabled={loading || !chatId || !studyMaterialUrl}
+          disabled={loading || !studyMaterialUrl}
           className="w-full"
         >
           {loading ? "Sending..." : "Send Telegram Reports"}
         </Button>
 
         <p className="text-sm text-muted-foreground">
-          This will send personalized weak section analysis to all users via
-          Telegram.
+          This will send personalized weak section analysis to all users with configured Telegram chat IDs.
         </p>
       </CardContent>
     </Card>
