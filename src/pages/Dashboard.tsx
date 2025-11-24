@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Target, Trophy, Calendar, TrendingUp, Clock, Settings, MessageCircle, Newspaper } from "lucide-react";
+import { BookOpen, Target, Trophy, Calendar, TrendingUp, Clock, MessageCircle, Newspaper, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -281,13 +281,23 @@ const Dashboard = () => {
                 <CardDescription>Continue your preparation journey</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <Button asChild className="h-auto p-6 flex-col gap-2">
                     <Link to="/test-series">
                       <Target className="h-8 w-8" />
                       <div className="text-center">
                         <div className="font-semibold">Take Mock Test</div>
                         <div className="text-xs opacity-90">Full-length practice tests</div>
+                      </div>
+                    </Link>
+                  </Button>
+                  
+                  <Button asChild variant="outline" className="h-auto p-6 flex-col gap-2">
+                    <Link to="/mains-test">
+                      <FileText className="h-8 w-8" />
+                      <div className="text-center">
+                        <div className="font-semibold">Mains Test</div>
+                        <div className="text-xs opacity-90">Upload answer sheets</div>
                       </div>
                     </Link>
                   </Button>

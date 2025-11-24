@@ -294,6 +294,59 @@ export type Database = {
           },
         ]
       }
+      mains_submissions: {
+        Row: {
+          checked_pdf_url: string | null
+          created_at: string
+          feedback: string | null
+          id: string
+          max_score: number | null
+          original_pdf_url: string
+          score: number | null
+          status: string
+          submitted_at: string
+          test_series_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checked_pdf_url?: string | null
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          max_score?: number | null
+          original_pdf_url: string
+          score?: number | null
+          status?: string
+          submitted_at?: string
+          test_series_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checked_pdf_url?: string | null
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          max_score?: number | null
+          original_pdf_url?: string
+          score?: number | null
+          status?: string
+          submitted_at?: string
+          test_series_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mains_submissions_test_series_id_fkey"
+            columns: ["test_series_id"]
+            isOneToOne: false
+            referencedRelation: "test_series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       polity_questions: {
         Row: {
           correct_answer: string
