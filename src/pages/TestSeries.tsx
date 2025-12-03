@@ -9,6 +9,7 @@ import { upscSubjects } from "@/data/upscSubjects";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { PremiumTestSeriesCard } from "@/components/PremiumTestSeriesCard";
 
 interface TestSeries {
   id: string;
@@ -304,6 +305,11 @@ const TestSeries = () => {
         </header>
 
         <main className="container mx-auto px-4 py-8">
+          {/* Premium Test Series Banner */}
+          <div className="mb-8">
+            <PremiumTestSeriesCard variant="compact" />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Test List */}
             <div className="lg:col-span-2 space-y-6">

@@ -18,6 +18,7 @@ import MainsTest from "./pages/MainsTest";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import TestSeriesTest from "./pages/TestSeriesTest";
+import PremiumTestSeries from "./pages/PremiumTestSeries";
 import CurrentAffairs from "./pages/CurrentAffairs";
 import CurrentAffairsDetail from "./pages/CurrentAffairsDetail";
 import CurrentAffairsBookmarks from "./pages/CurrentAffairsBookmarks";
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/test-series" element={<TestSeries />} />
             <Route path="/test-series/:subjectId" element={<SubjectTest />} />
             <Route path="/test/:testId" element={<TestSeriesTest />} />
+            <Route path="/test-series/upsc-2026-premium" element={<PremiumTestSeries />} />
             <Route path="/polity-test" element={<PolityTest />} />
             <Route path="/study-materials" element={<StudyMaterials />} />
             <Route path="/study-materials/polity" element={<PolityApp />} />

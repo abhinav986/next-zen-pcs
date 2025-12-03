@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Target, BookOpen, Trophy, Users, ArrowRight, MessageCircle, Newspaper } from "lucide-react";
 import { Link } from "react-router-dom";
+import { PremiumTestSeriesCard } from "@/components/PremiumTestSeriesCard";
 
 const Index = () => {
   return (
@@ -162,8 +163,25 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Stats Section */}
+        {/* Premium Test Series */}
         <section className="py-16 md:py-24 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                UPSC 2026 Premium Test Series
+              </h2>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                Get complete access to full-length mock tests with detailed analysis
+              </p>
+            </div>
+            <div className="max-w-2xl mx-auto">
+              <PremiumTestSeriesCard variant="full" />
+            </div>
+          </div>
+        </section>
+
+        {/* Stats Section */}
+        <section className="py-16 md:py-24">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
               <div>
