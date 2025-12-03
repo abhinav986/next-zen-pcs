@@ -518,7 +518,7 @@ export type Database = {
           answers: Json
           completed_at?: string
           id?: string
-          score?: number
+          score: number
           subject?: string | null
           test_name: string
           time_taken?: number | null
