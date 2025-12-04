@@ -1,11 +1,30 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { createHmac } from "https://deno.land/std@0.168.0/crypto/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Helper function to create HMAC signature using Web Crypto API
+async function createHmacSignature(secret: string, message: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const messageData = encoder.encode(message);
+  
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
+  return Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -93,10 +112,11 @@ serve(async (req) => {
     if (action === 'verify-payment') {
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = body;
 
-      // Verify signature
-      const generatedSignature = createHmac('sha256', RAZORPAY_KEY_SECRET)
-        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-        .toString();
+      // Verify signature using Web Crypto API
+      const generatedSignature = await createHmacSignature(
+        RAZORPAY_KEY_SECRET,
+        `${razorpay_order_id}|${razorpay_payment_id}`
+      );
 
       const isValid = generatedSignature === razorpay_signature;
       console.log('Payment verification result:', isValid);
